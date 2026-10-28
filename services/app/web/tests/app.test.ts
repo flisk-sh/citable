@@ -101,7 +101,10 @@ describe("pages", () => {
 		const app = createApp({ fetcher: fakeFetcher(site) });
 		const res = await app.request("/acme.example");
 		const html = await res.text();
-		expect(html.length).toBeLessThan(40_000);
+		// What the site controls, without the stylesheet every page carries.
+		expect(html.replace(/<style>[\s\S]*?<\/style>/, "").length).toBeLessThan(
+			40_000,
+		);
 		expect(html).toContain("5000 h1 headings");
 		expect(html).toContain('<meta name="robots" content="noindex">');
 		const json = await (

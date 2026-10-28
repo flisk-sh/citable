@@ -109,6 +109,8 @@ header.bar.stage{background:#07080c;border-bottom-color:#1d2029}header.bar.stage
 .summary.stage .bots li{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
 .check{border-left:4px solid var(--c)}
 .cta{position:relative;overflow:hidden;background:linear-gradient(135deg,#1e2a6b,#3b1f73 60%,#0f3d2c);color:#fff}.cta .btn{background:#fff;color:#141413}.cta .btn:hover{background:#e7e9ff;color:#141413}.cta pre{background:rgba(0,0,0,.25)}
+.hero.stage{padding:48px 0 0}
+@media (min-width:980px){.hero.stage{padding:56px 0 64px}.hero.stage .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);column-gap:56px;align-items:center;text-align:left}.hero.stage .wrap>*{grid-column:1}.hero.stage .pill{justify-self:start}.hero.stage h1{margin:18px 0 16px;font-size:clamp(44px,4.6vw,62px)}.hero.stage .lede{margin:0 0 26px;font-size:18px}.hero.stage .addr{margin:0}.hero.stage .examples,.hero.stage .engines{justify-content:flex-start}.hero.stage .engines{margin-top:26px;gap:8px 18px;font-size:14px}.hero.stage .demo{grid-column:2;grid-row:1/span 6;margin:0;border-radius:16px;border-bottom:1px solid var(--line);box-shadow:0 30px 90px -30px rgba(124,92,255,.6)}}
 `;
 
 /** The path the site is served under: empty online, /api/web behind Flisk's local proxy. */
