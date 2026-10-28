@@ -94,35 +94,66 @@ export async function refusal(
 	url: URL,
 	resolve = lookup,
 ): Promise<string | undefined> {
+	return (await vet(url, resolve)).refused;
+}
+
+/** Either why a URL may not be fetched, or the checked address to connect to. */
+async function vet(
+	url: URL,
+	resolve: typeof lookup,
+): Promise<{ refused: string } | { refused?: undefined; address: string }> {
+	const no = (refused: string) => ({ refused });
 	if (url.protocol !== "http:" && url.protocol !== "https:")
-		return "only http and https addresses";
+		return no("only http and https addresses");
 	if (url.port && url.port !== "80" && url.port !== "443")
-		return "only ports 80 and 443";
-	if (url.username || url.password) return "no credentials in the address";
+		return no("only ports 80 and 443");
+	if (url.username || url.password) return no("no credentials in the address");
 	const host = url.hostname.replace(/^\[|\]$/g, "");
 	if (isIP(host))
-		return isPrivateAddress(host) ? "a private address" : undefined;
+		return isPrivateAddress(host) ? no("a private address") : { address: host };
 	if (
 		!host.includes(".") ||
 		/\.(localhost|local|internal|lan|home|corp|test)$/i.test(host)
 	)
-		return "not a public host";
+		return no("not a public host");
 	let addresses: { address: string }[];
 	try {
 		addresses = await resolve(host, { all: true });
 	} catch {
-		return "the host name does not resolve";
+		return no("the host name does not resolve");
 	}
-	if (addresses.length === 0) return "the host name does not resolve";
+	if (addresses.length === 0) return no("the host name does not resolve");
 	if (addresses.some((a) => isPrivateAddress(a.address)))
-		return "the host resolves to a private address";
-	return undefined;
+		return no("the host resolves to a private address");
+	// IPv4 first: not every host (Render included) can reach IPv6, and fetch no longer picks between them.
+	const address = addresses.find((a) => isIP(a.address) === 4) ?? addresses[0];
+	return { address: address.address };
+}
+
+/**
+ * The request for `url` sent to `address`, the address that was checked, instead of letting fetch resolve the name
+ * again. The host name stays in the Host header and in TLS (SNI and the certificate check).
+ */
+export function pinned(
+	url: URL,
+	address: string,
+): { input: URL; host: string; serverName?: string } {
+	const input = new URL(url);
+	input.hostname = isIP(address) === 6 ? `[${address}]` : address;
+	const name = url.hostname.replace(/^\[|\]$/g, "");
+	return {
+		input,
+		host: url.host,
+		serverName: url.protocol === "https:" && !isIP(name) ? name : undefined,
+	};
 }
 
 export interface FetchOptions {
 	timeoutMs?: number;
 	maxBytes?: number;
 	maxRedirects?: number;
+	/** How host names resolve; tests pass their own. */
+	resolve?: typeof lookup;
 }
 
 /** Fetches with GET, following up to `maxRedirects` redirects by hand and checking each hop. Never throws. */
@@ -130,7 +161,12 @@ export async function safeFetch(
 	url: string,
 	options: FetchOptions = {},
 ): Promise<Fetched> {
-	const { timeoutMs = 8000, maxBytes = 2_000_000, maxRedirects = 5 } = options;
+	const {
+		timeoutMs = 8000,
+		maxBytes = 2_000_000,
+		maxRedirects = 5,
+		resolve = lookup,
+	} = options;
 	const started = Date.now();
 	const failed = (error: string, finalUrl = url): Fetched => ({
 		url,
@@ -149,17 +185,36 @@ export async function safeFetch(
 	}
 	const signal = AbortSignal.timeout(timeoutMs);
 	for (let hop = 0; hop <= maxRedirects; hop++) {
-		const refused = await refusal(current);
-		if (refused) return failed(`refused: ${refused}`, current.href);
+		// A name server that never answers must not hold the check past its time limit.
+		const vetted = await Promise.race([
+			vet(current, resolve),
+			new Promise<undefined>((done) =>
+				signal.aborted
+					? done(undefined)
+					: signal.addEventListener("abort", () => done(undefined), {
+							once: true,
+						}),
+			),
+		]);
+		if (!vetted)
+			return failed(
+				`no answer within ${timeoutMs / 1000} seconds`,
+				current.href,
+			);
+		if (!("address" in vetted))
+			return failed(`refused: ${vetted.refused}`, current.href);
+		const target = pinned(current, vetted.address);
 		let response: Response;
 		try {
-			response = await fetch(current, {
+			response = await fetch(target.input, {
 				redirect: "manual",
 				signal,
 				headers: {
+					host: target.host,
 					"user-agent": USER_AGENT,
 					accept: "text/html,text/plain,application/xml;q=0.9,*/*;q=0.5",
 				},
+				...(target.serverName && { tls: { serverName: target.serverName } }),
 			});
 		} catch (error) {
 			const timedOut =

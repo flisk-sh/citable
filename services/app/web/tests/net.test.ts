@@ -1,5 +1,11 @@
-import { describe, expect, it } from "bun:test";
-import { isPrivateAddress, normalizeTarget, refusal } from "../src/net";
+import { afterEach, describe, expect, it, spyOn } from "bun:test";
+import {
+	isPrivateAddress,
+	normalizeTarget,
+	pinned,
+	refusal,
+	safeFetch,
+} from "../src/net";
 
 const resolvesTo =
 	(...addresses: string[]) =>
@@ -116,6 +122,61 @@ describe("refusal", () => {
 		expect(await refusal(new URL("https://nope.example/"), fail)).toContain(
 			"resolve",
 		);
+	});
+});
+
+describe("pinned requests", () => {
+	afterEach(() => {
+		(
+			globalThis.fetch as unknown as { mockRestore?: () => void }
+		).mockRestore?.();
+	});
+
+	it("sends the request to the checked address, keeping the name for Host and TLS", () => {
+		const https = pinned(new URL("https://example.com/a?b=1"), "93.184.216.34");
+		expect(https.input.href).toBe("https://93.184.216.34/a?b=1");
+		expect(https.host).toBe("example.com");
+		expect(https.serverName).toBe("example.com");
+		const v6 = pinned(new URL("http://example.com/"), "2606:4700::1111");
+		expect(v6.input.href).toBe("http://[2606:4700::1111]/");
+		expect(v6.serverName).toBeUndefined();
+	});
+
+	it("does not resolve the name again between the check and the request (DNS rebinding)", async () => {
+		let lookups = 0;
+		// The first answer is public, every later one private: what a rebinding name server does.
+		const rebinding = (async () => [
+			{ address: lookups++ === 0 ? "93.184.216.34" : "127.0.0.1", family: 4 },
+		]) as never;
+		const seen: { url: string; host: string | null }[] = [];
+		spyOn(globalThis, "fetch").mockImplementation((async (
+			input: URL,
+			init: RequestInit,
+		) => {
+			seen.push({
+				url: String(input),
+				host: new Headers(init.headers).get("host"),
+			});
+			return new Response("<title>ok</title>", { status: 200 });
+		}) as never);
+		const page = await safeFetch("http://rebind.example/", {
+			resolve: rebinding,
+		});
+		expect(page.status).toBe(200);
+		expect(page.finalUrl).toBe("http://rebind.example/");
+		expect(seen).toEqual([
+			{ url: "http://93.184.216.34/", host: "rebind.example" },
+		]);
+		expect(lookups).toBe(1);
+	});
+
+	it("gives up on a name server that does not answer in time", async () => {
+		const hang = (() => new Promise(() => {})) as never;
+		const page = await safeFetch("http://slow.example/", {
+			resolve: hang,
+			timeoutMs: 50,
+		});
+		expect(page.error).toContain("no answer");
 	});
 });
 
