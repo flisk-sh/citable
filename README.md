@@ -58,4 +58,4 @@ citable.flisk.si is one Render free web service from [`render.yaml`](render.yaml
 
 Built and run with [Flisk](https://github.com/flisk-sh/flisk). MIT licensed.
 
-The clip on the home page and above is drawn by `services/app/web/scripts/video.ts` (`bun run video`, needs ffmpeg).
+The film on the home page and above is made by [`video/`](video/): `bun video/shots.ts` takes screenshots of the live site, `bun video/render.ts` films them in headless Chrome (needs Chrome and ffmpeg). Scenes are in `video/film.json`.

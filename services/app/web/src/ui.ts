@@ -74,7 +74,7 @@ export function homePage(publicUrl: string, noindex = false): string {
 ${form(root)}
 <p class="chips">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
 <figure class="demo"><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline preload="metadata" aria-describedby="demo-text"></video>
-<figcaption id="demo-text" class="sr">A 13-second clip: citable.flisk.si/ is typed in front of stripe.com, the report scores it 96 out of 100, lists each check with its fix, and offers Ask ChatGPT and Ask Claude buttons.</figcaption></figure>
+<figcaption id="demo-text" class="sr">A 23-second film: citable.flisk.si/ is typed in front of stripe.com in a browser, the report scores it 96 out of 100, the camera moves to a check and its fix, and a click on Ask Claude hands the fixes to your own AI.</figcaption></figure>
 <h2>What it checks</h2>
 <ul>
 <li>robots.txt for each answer engine's crawler, apart from the training crawlers you may want to keep out</li>
