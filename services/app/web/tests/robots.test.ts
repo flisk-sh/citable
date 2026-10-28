@@ -51,6 +51,40 @@ describe("robots.txt", () => {
 		);
 	});
 
+	it("matches wildcards the way the regular expression did", () => {
+		const cases: [string, string, boolean][] = [
+			["/a*b*c", "/aXbYc", true],
+			["/a*b*c", "/aXcYb", false],
+			["/*.php$", "/x.php", true],
+			["/*.php$", "/x.php?y", false],
+			["/*.php", "/x.php?y", true],
+			["/a*a$", "/a", false],
+			["/a*a$", "/aa", true],
+			["/x$", "/x", true],
+			["/x$", "/xy", false],
+			["*", "/anything", true],
+			["/$", "/", true],
+			["/a$b", "/a$bc", true],
+		];
+		for (const [pattern, path, expected] of cases) {
+			const robots = parseRobots(`User-agent: *\nDisallow: ${pattern}\n`);
+			expect([pattern, path, !isAllowed(robots, "Bot", path).allowed]).toEqual([
+				pattern,
+				path,
+				expected,
+			]);
+		}
+	});
+
+	it("does not backtrack on a pattern built to stall it", () => {
+		const robots = parseRobots(
+			`User-agent: *\nDisallow: /${"*a".repeat(40)}*X\n`,
+		);
+		const started = performance.now();
+		expect(isAllowed(robots, "Bot", `/${"a".repeat(2000)}`).allowed).toBe(true);
+		expect(performance.now() - started).toBeLessThan(100);
+	});
+
 	it("treats an empty Disallow as no rule, and ignores comments", () => {
 		const robots = parseRobots(
 			"# hello\nUser-agent: * # everyone\nDisallow:\n",

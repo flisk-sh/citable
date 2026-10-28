@@ -1,6 +1,7 @@
 # Production image for Citable online (Render, or any container host). `flisk up` does not use this file: locally,
 # Flisk builds its own image from services/app/web/service.json.
-FROM oven/bun:1.2-slim
+# 1.4: safeFetch connects to the address it checked and names the host through fetch's tls.serverName.
+FROM oven/bun:1.4-slim
 ENV NODE_ENV=production
 WORKDIR /app
 

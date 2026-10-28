@@ -151,6 +151,8 @@ export function reportPage(report: Report, publicUrl: string): string {
 			title: `${report.host}: ${report.score}/100 for AI search`,
 			description: `Can ChatGPT, Claude, Perplexity and Google AI cite ${report.host}? Score ${report.score}/100, grade ${report.grade}, ${fixes} thing${fixes === 1 ? "" : "s"} to fix, each with the fix.`,
 			crumbs: [{ name: report.host, path }],
+			// A report shows what any site chose to say, under this domain. Only the curated examples are for search engines.
+			noindex: !EXAMPLES.includes(path),
 		},
 		`${top}
 <div class="score"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="Score ${report.score} of 100"><b>${report.score}<small>grade ${report.grade}</small></b></div>

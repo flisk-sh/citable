@@ -6,6 +6,7 @@ import {
 	clientIp,
 	type ProxyMode,
 	RateLimiter,
+	rateKey,
 	Slots,
 	securityHeaders,
 	TtlCache,
@@ -83,10 +84,8 @@ export function createApp(options: AppOptions = {}) {
 		const env = c.env as
 			| { requestIP?: (r: Request) => { address: string } | null }
 			| undefined;
-		return clientIp(
-			c.req.raw.headers,
-			env?.requestIP?.(c.req.raw)?.address,
-			proxy,
+		return rateKey(
+			clientIp(c.req.raw.headers, env?.requestIP?.(c.req.raw)?.address, proxy),
 		);
 	};
 
@@ -285,9 +284,13 @@ export function createApp(options: AppOptions = {}) {
 		const fresh = params.get("fresh") === "1";
 		params.delete("fresh");
 		const query = params.toString();
-		const target = normalizeTarget(
-			decodeURIComponent(rest) + (query ? `?${query}` : ""),
-		);
+		let decoded: string;
+		try {
+			decoded = decodeURIComponent(rest);
+		} catch {
+			return c.html(homePage(siteOf(c), true), 404);
+		}
+		const target = normalizeTarget(decoded + (query ? `?${query}` : ""));
 		if (!target) return c.html(homePage(siteOf(c), true), 404);
 		// One address per page: https://example.com/ and example.com both land on /example.com.
 		const canonicalPath = `/${target.hostname}${target.pathname === "/" ? "" : target.pathname}`;

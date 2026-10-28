@@ -68,14 +68,27 @@ function rulesFor(
 	};
 }
 
+/**
+ * Whether a rule's pattern (`*` for any run of characters, `$` at the end to anchor it) matches `path`. Matched part by
+ * part with indexOf rather than as a regular expression: a pattern such as /*a*a*a*a*a*a*X made of the site's own
+ * robots.txt would otherwise backtrack for minutes and stall the whole server.
+ */
 function patternMatches(pattern: string, path: string): boolean {
 	const anchored = pattern.endsWith("$");
-	const body = anchored ? pattern.slice(0, -1) : pattern;
-	const regex = body
-		.split("*")
-		.map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
-		.join(".*");
-	return new RegExp(`^${regex}${anchored ? "$" : ""}`).test(path);
+	const parts = (anchored ? pattern.slice(0, -1) : pattern).split("*");
+	if (!path.startsWith(parts[0])) return false;
+	let at = parts[0].length;
+	if (parts.length === 1) return !anchored || at === path.length;
+	// Each middle part as early as it occurs: taking it earlier never leaves less room for the parts after it.
+	for (const part of parts.slice(1, -1)) {
+		const found = path.indexOf(part, at);
+		if (found < 0) return false;
+		at = found + part.length;
+	}
+	const last = parts[parts.length - 1];
+	return anchored
+		? path.length - last.length >= at && path.endsWith(last)
+		: path.indexOf(last, at) >= 0;
 }
 
 export interface Verdict {

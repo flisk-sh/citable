@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { createApp } from "../src/app";
-import { RateLimiter, TtlCache } from "../src/guard";
+import { RateLimiter, rateKey, TtlCache } from "../src/guard";
 import { fakeFetcher, goodSite } from "./fixtures";
 
 const make = (calls: string[] = [], checksPerHour = 30) =>
@@ -27,6 +27,7 @@ describe("pages", () => {
 		expect(res.headers.get("content-security-policy")).not.toContain(
 			"script-src",
 		);
+		expect(res.headers.get("strict-transport-security")).toContain("max-age=");
 		expect(await res.text()).toContain("Can AI answers cite your site?");
 	});
 
@@ -89,6 +90,32 @@ describe("pages", () => {
 		expect(html).toContain("&lt;script&gt;alert(1)");
 	});
 
+	it("keeps what a site sends short, and reports other than the examples out of search", async () => {
+		const long = "B".repeat(100_000);
+		const site = goodSite();
+		site["https://acme.example/"] = {
+			status: 200,
+			headers: { "content-type": "text/html" },
+			body: `<title>${long}</title><meta name="description" content="${long}"><link rel="canonical" href="http://[${long}">${"<h1>x</h1>".repeat(5000)}`,
+		};
+		const app = createApp({ fetcher: fakeFetcher(site) });
+		const res = await app.request("/acme.example");
+		const html = await res.text();
+		expect(html.length).toBeLessThan(40_000);
+		expect(html).toContain("5000 h1 headings");
+		expect(html).toContain('<meta name="robots" content="noindex">');
+		const json = await (
+			await app.request("/api/check?url=acme.example")
+		).text();
+		expect(json.length).toBeLessThan(20_000);
+		const example = await (
+			await createApp({
+				fetcher: fakeFetcher(goodSite("https://flisk.sh")),
+			}).request("/flisk.sh")
+		).text();
+		expect(example).toContain('content="index,follow');
+	});
+
 	it("limits new checks per client, not cached views", async () => {
 		const app = make([], 1);
 		expect((await app.request("/acme.example")).status).toBe(200);
@@ -105,6 +132,27 @@ describe("pages", () => {
 		const svg = await app.request("/badge/acme.example.svg");
 		expect(svg.headers.get("content-type")).toContain("image/svg+xml");
 		expect(await svg.text()).toContain("100/100");
+	});
+
+	it("answers a broken percent escape with the home page, not an error", async () => {
+		const res = await make().request("/%E0%A4%A");
+		expect(res.status).toBe(404);
+		expect(await res.text()).toContain("Can AI answers cite your site?");
+	});
+
+	it("counts an IPv6 client by its /64", async () => {
+		const app = createApp({
+			fetcher: fakeFetcher(goodSite()),
+			proxy: "last-forwarded",
+			checksPerHour: 1,
+		});
+		const from = (ip: string, path: string) =>
+			app.request(path, { headers: { "x-forwarded-for": ip } });
+		expect((await from("2001:db8:1:2::a", "/acme.example")).status).toBe(200);
+		expect((await from("2001:db8:1:2::b", "/acme.example/x")).status).toBe(429);
+		expect((await from("2001:db8:1:3::a", "/acme.example/y")).status).not.toBe(
+			429,
+		);
 	});
 
 	it("keeps its own paths out of the checker", async () => {
@@ -177,6 +225,14 @@ describe("guards", () => {
 		]).toEqual([0, 0, true, 0]);
 		t = 1000;
 		expect(limiter.hit("a")).toBe(0);
+	});
+
+	it("keys IPv4 by address and IPv6 by /64", () => {
+		expect(rateKey("203.0.113.9")).toBe("203.0.113.9");
+		expect(rateKey("::ffff:203.0.113.9")).toBe("203.0.113.9");
+		expect(rateKey("2001:db8:0:1:aaaa::1")).toBe("2001:db8:0:1::/64");
+		expect(rateKey("2001:0db8::1")).toBe("2001:db8:0:0::/64");
+		expect(rateKey("2001:db8:0:1:2:3:4:5")).toBe("2001:db8:0:1::/64");
 	});
 
 	it("forgets cached entries after their time and beyond the size", () => {

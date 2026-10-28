@@ -63,6 +63,26 @@ export function clientIp(
 	return socketAddress ?? "unknown";
 }
 
+/**
+ * The key a client is counted under: its IPv4 address, or the /64 of an IPv6 one. One subscriber gets a whole /64,
+ * so counting single IPv6 addresses would let one client make billions of keys.
+ */
+export function rateKey(ip: string): string {
+	const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip);
+	if (mapped) return mapped[1];
+	if (!ip.includes(":")) return ip;
+	const [left, right] = ip.toLowerCase().replace(/%.*$/, "").split("::");
+	const head = left ? left.split(":") : [];
+	const tail = right ? right.split(":") : [];
+	const fill =
+		right === undefined ? 0 : Math.max(0, 8 - head.length - tail.length);
+	const groups = [...head, ...Array(fill).fill("0"), ...tail];
+	return `${groups
+		.slice(0, 4)
+		.map((g) => g.replace(/^0+(?=.)/, ""))
+		.join(":")}::/64`;
+}
+
 /** At most `limit` tasks at once; `run` answers undefined instead of queueing when all slots are taken. */
 export class Slots {
 	private running = 0;
@@ -119,6 +139,7 @@ export function securityHeaders(): Record<string, string> {
 			"form-action 'self'",
 			"frame-ancestors 'none'",
 		].join("; "),
+		"strict-transport-security": "max-age=31536000",
 		"x-content-type-options": "nosniff",
 		"referrer-policy": "strict-origin-when-cross-origin",
 		"permissions-policy": "camera=(), microphone=(), geolocation=()",
