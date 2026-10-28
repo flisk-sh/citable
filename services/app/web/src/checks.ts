@@ -599,9 +599,10 @@ function llmsCheck(llms: Fetched): Check {
 	const note =
 		"llms.txt is a young convention: AI coding tools read it, while no major answer engine says it uses it yet. Cheap to add.";
 	if (isText(llms) && /^\s*# \S/.test(llms.body)) {
-		const links = (
-			llms.body.match(/\]\(https?:\/\/[^)]+\)|\]\(\/[^)]*\)/g) ?? []
-		).length;
+		const links =
+			// A link stops at whitespace or the next "]": unbounded, a body of "](http://" repeated took a second to scan.
+			(llms.body.match(/\]\(https?:\/\/[^)\s\]]+\)|\]\(\/[^)\s\]]*\)/g) ?? [])
+				.length;
 		return {
 			id: "llms-txt",
 			title: "llms.txt",
