@@ -14,6 +14,7 @@ Citable reads the page the way ChatGPT search, Claude, Perplexity, Google AI Ove
 - **What a crawler without JavaScript sees.** noindex and nosnippet (header and meta), readable text in the server's HTML, title and description, headings, schema.org JSON-LD, canonical, sitemap, llms.txt, response time. A site whose bot protection refuses the checker gets a partial report that says so, not a score for an empty page.
 - **Fixes for your AI, not ours.** Citable never calls a model. Under every report, *Ask ChatGPT* and *Ask Claude* hand the list of fixes to the visitor's own assistant.
 - **An MCP server.** `https://citable.flisk.si/mcp` (Streamable HTTP, no key) gives Claude, ChatGPT, Cursor or Codex one read-only tool, `check_site`.
+- **A CLI for CI.** `npx @flisk-sh/citable example.com --skip speed --min-score 90` runs the same checks from your machine or a workflow, local previews included. See [packages/citable](packages/citable/README.md).
 - **A badge.** `![AI search](https://citable.flisk.si/badge/example.com.svg)`.
 - **No signup, no database, no API key.** The URL is the state. Reports live in memory for an hour, then they are gone.
 

@@ -143,7 +143,8 @@ export async function readPage(html: string): Promise<PageFacts> {
 		.onDocument({
 			text(t) {
 				if (skip > 0 || inTitle) return;
-				text.push(t.text);
+				// A text node can arrive in several chunks, split anywhere: a space only where the node ends.
+				text.push(t.lastInTextNode ? `${t.text} ` : t.text);
 				if (h1Depth > 0) h1Text += t.text;
 			},
 		});
@@ -153,7 +154,7 @@ export async function readPage(html: string): Promise<PageFacts> {
 	facts.description = clip(decode(facts.description.trim()));
 	facts.h1 = facts.h1.map((h) => clip(decode(h)));
 	facts.canonical = clip(facts.canonical, 2000);
-	facts.words = decode(text.join(" "))
+	facts.words = decode(text.join(""))
 		.split(/\s+/)
 		.filter((w) => /\p{L}|\p{N}/u.test(w)).length;
 	return facts;
