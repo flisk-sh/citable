@@ -89,6 +89,32 @@ describe("pages", () => {
 		expect(html).toContain("&lt;script&gt;alert(1)");
 	});
 
+	it("keeps what a site sends short, and reports other than the examples out of search", async () => {
+		const long = "B".repeat(100_000);
+		const site = goodSite();
+		site["https://acme.example/"] = {
+			status: 200,
+			headers: { "content-type": "text/html" },
+			body: `<title>${long}</title><meta name="description" content="${long}"><link rel="canonical" href="http://[${long}">${"<h1>x</h1>".repeat(5000)}`,
+		};
+		const app = createApp({ fetcher: fakeFetcher(site) });
+		const res = await app.request("/acme.example");
+		const html = await res.text();
+		expect(html.length).toBeLessThan(40_000);
+		expect(html).toContain("5000 h1 headings");
+		expect(html).toContain('<meta name="robots" content="noindex">');
+		const json = await (
+			await app.request("/api/check?url=acme.example")
+		).text();
+		expect(json.length).toBeLessThan(20_000);
+		const example = await (
+			await createApp({
+				fetcher: fakeFetcher(goodSite("https://flisk.sh")),
+			}).request("/flisk.sh")
+		).text();
+		expect(example).toContain('content="index,follow');
+	});
+
 	it("limits new checks per client, not cached views", async () => {
 		const app = make([], 1);
 		expect((await app.request("/acme.example")).status).toBe(200);
