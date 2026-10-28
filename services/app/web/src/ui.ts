@@ -88,6 +88,27 @@ details ul{margin:8px 0 0;padding:10px 14px 10px 30px;background:var(--sunk);bor
 .prose{padding-top:56px}.prose h1{text-align:left;margin:0 0 24px;font-size:clamp(34px,6vw,52px)}.prose p{color:var(--muted);font-size:17px}.prose h2{margin-top:48px}
 dl{margin:0}dt{font-weight:700;margin-top:22px;font-size:17px}dd{margin:6px 0 0;color:var(--muted)}
 @media (max-width:640px){.summary{grid-template-columns:1fr;justify-items:start;padding:22px}.ring{width:112px;height:112px}.ring b{width:90px;height:90px;font-size:36px}.addr .pre{display:none}.hero{padding-top:48px}nav{gap:16px;font-size:14px}.again{margin-left:0}.check{padding:16px}.meter span{display:none}.bots{grid-template-columns:1fr 1fr}.bar form+nav{display:none}}
+.stage{position:relative;overflow:hidden;background:#07080c;color:#f4f3ef;--fg:#f4f3ef;--muted:#b0afba;--faint:#7f7e8a;--line:#262833;--surface:#11131a;--sunk:#1b1e28;--accent:#9db0ff;--accent-fg:#07080c;--pass:#4ade80;--warn:#fbbf24;--fail:#ff7b72}
+.stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(60% 65% at 50% 30%,#000 25%,transparent 100%);mask-image:radial-gradient(60% 65% at 50% 30%,#000 25%,transparent 100%);pointer-events:none}
+.stage::after{content:"";position:absolute;inset:-10%;background:radial-gradient(38% 32% at 22% 18%,rgba(91,124,255,.38),transparent 70%),radial-gradient(32% 30% at 82% 30%,rgba(74,222,128,.24),transparent 70%),radial-gradient(40% 36% at 55% 95%,rgba(168,85,247,.3),transparent 70%);pointer-events:none}
+.stage>*{position:relative;z-index:1}
+header.bar.stage{background:#07080c;border-bottom-color:#1d2029}header.bar.stage::before,header.bar.stage::after{display:none}
+.grad{background:linear-gradient(92deg,#9db0ff,#c084fc 48%,#4ade80);-webkit-background-clip:text;background-clip:text;color:transparent}
+.addr button,.btn.primary{background:linear-gradient(135deg,#5b7cff,#8b5cf6);color:#fff;box-shadow:0 8px 24px -10px rgba(91,124,255,.8)}
+.addr button:hover,.btn.primary:hover{background:linear-gradient(135deg,#6d8bff,#a06bff);color:#fff}
+.stage .addr{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.stage .examples a{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+.hero.stage{padding:84px 0 0;text-align:center}.hero .demo{margin-bottom:-1px;border-radius:16px 16px 0 0;border-bottom:0;box-shadow:0 -10px 90px -20px rgba(124,92,255,.55)}
+.engines b{display:inline-flex;align-items:center;gap:8px;color:#e6e5ee}.engines b i{width:8px;height:8px;border-radius:50%;background:var(--d)}
+.tile{position:relative;overflow:hidden;transition:transform .15s,border-color .15s}.tile:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:calc(var(--w)*1.2%);max-width:100%;height:3px;background:linear-gradient(90deg,#5b7cff,#c084fc)}
+.tile .w{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.steps div::before{background:linear-gradient(135deg,#5b7cff,#8b5cf6);color:#fff}
+.summary.stage{border:0;box-shadow:0 30px 80px -40px rgba(91,124,255,.6)}
+.summary.stage .ring{box-shadow:0 0 70px -10px var(--c);background:conic-gradient(var(--c) calc(var(--s)*1%),rgba(255,255,255,.1) 0)}.summary.stage .ring b{background:#0d0f15}
+.summary.stage .bots li{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
+.check{border-left:4px solid var(--c)}
+.cta{position:relative;overflow:hidden;background:linear-gradient(135deg,#1e2a6b,#3b1f73 60%,#0f3d2c);color:#fff}.cta .btn{background:#fff;color:#141413}.cta .btn:hover{background:#e7e9ff;color:#141413}.cta pre{background:rgba(0,0,0,.25)}
 `;
 
 /** The path the site is served under: empty online, /api/web behind Flisk's local proxy. */
@@ -110,7 +131,7 @@ function layout(
 	return `<!doctype html><html lang="${SITE.lang}"><head>
 ${head(base, meta)}
 <style>${STYLE}</style></head><body>
-<header class="bar"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, search)}<nav><a href="${root}/#how">How it works</a><a href="${root}/about">About</a><a href="${SITE.repo}">GitHub</a></nav></div></header>
+<header class="bar stage"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, search)}<nav><a href="${root}/#how">How it works</a><a href="${root}/about">About</a><a href="${SITE.repo}">GitHub</a></nav></div></header>
 <main>${body}</main>
 <footer><div class="wrap"><span>${SITE.name} reads pages the way an AI crawler does: no JavaScript, no model, nothing stored.</span><span><a href="${SITE.repo}">Open source</a> · built and run with <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">About the checker</a></span></div></footer>
 </body></html>`;
@@ -150,6 +171,15 @@ const CHECKS: [string, number, string][] = [
 	],
 ];
 
+/** The engines the hero names, with a colour each. */
+const ENGINES: [string, string][] = [
+	["ChatGPT", "#10a37f"],
+	["Claude", "#d97757"],
+	["Perplexity", "#20b8cd"],
+	["Google AI Overviews", "#4285f4"],
+	["Bing Copilot", "#a78bfa"],
+];
+
 /** The home page; `noindex` when it answers an address that is not a site (404). */
 export function homePage(publicUrl: string, noindex = false): string {
 	const base = publicUrl.replace(/\/$/, "");
@@ -162,20 +192,20 @@ export function homePage(publicUrl: string, noindex = false): string {
 			description: SITE.description,
 			noindex,
 		},
-		`<div class="wrap"><section class="hero">
+		`<section class="hero stage"><div class="wrap">
 <span class="pill"><i></i>Free · no signup · open source</span>
-<h1>Can AI answers <em>cite</em> your site?</h1>
+<h1>Can AI answers <em class="grad">cite</em> your site?</h1>
 <p class="lede">Put <b>${esc(new URL(publicUrl).host)}/</b> in front of any address. Citable reads the page the way ChatGPT, Claude, Perplexity and Google's crawlers do, and tells you what keeps it out of their answers, with the fix.</p>
 ${form(publicUrl)}
 <p class="examples">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
-<p class="engines"><span>Checked crawler by crawler for</span>ChatGPT · Claude · Perplexity · Google AI Overviews · Bing Copilot</p>
+<p class="engines"><span>Checked crawler by crawler for</span>${ENGINES.map(([n, c]) => `<b style="--d:${c}"><i></i>${n}</b>`).join("")}</p>
 <figure class="demo"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline preload="metadata" aria-describedby="demo-text"></video>
 <figcaption id="demo-text" class="sr">A 23-second film: citable.flisk.si/ is typed in front of stripe.com in a browser, the report scores it 96 out of 100, the camera moves to a check and its fix, and a click on Ask Claude hands the fixes to your own AI.</figcaption></figure>
-</section>
+</div></section><div class="wrap">
 <section class="block" id="how"><p class="kicker">How it works</p><h2>One address, one honest report.</h2><p class="sub">No account, no browser extension, no model guessing. Citable fetches what a crawler fetches and reads it the same way.</p>
 <div class="steps"><div><b>Prefix any address</b><p>citable.flisk.si/your-site.com, or paste it in the box above. Any page works, not only home pages.</p></div><div><b>Read it like a crawler</b><p>The page, robots.txt, llms.txt and the sitemap, with no JavaScript, as the seven answer crawlers see them.</p></div><div><b>Fix what blocks citations</b><p>Each problem comes with the exact change to make, and a button that hands the list to your own AI.</p></div></div></section>
 <section class="block"><p class="kicker">What it checks</p><h2>Ten checks, scored out of 100.</h2><p class="sub">Weighted by how much each one decides whether an answer engine can quote you at all.</p>
-<div class="grid">${CHECKS.map(([t, w, d]) => `<div class="tile"><span class="w">${w}</span><b>${t}</b><p>${d}</p></div>`).join("")}</div></section>
+<div class="grid">${CHECKS.map(([t, w, d]) => `<div class="tile" style="--w:${w * 4}"><span class="w">${w}</span><b>${t}</b><p>${d}</p></div>`).join("")}</div></section>
 <section class="block narrow"><p class="kicker">In your AI</p><h2>Ask your assistant directly.</h2><p class="sub">Citable is also an MCP server. Add it once, then ask "can AI cite example.com?"</p>
 <pre class="term"><s>$</s> claude mcp add --transport http citable ${esc(base)}/mcp</pre></section></div>`,
 	);
@@ -274,7 +304,7 @@ export function reportPage(report: Report, publicUrl: string): string {
 			noindex: !EXAMPLES.includes(path),
 		},
 		`<div class="wrap narrow">
-<div class="summary"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="Score ${report.score} of 100"><b>${report.score}<small>grade ${report.grade}</small></b></div>
+<div class="summary stage"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="Score ${report.score} of 100"><b>${report.score}<small>grade ${report.grade}</small></b></div>
 <div><p class="host">${esc(report.host)}</p><p class="final">${esc(report.finalUrl)}</p>
 <div class="tags">${fixes === 0 ? `<span class="tag pass">✓ Nothing to fix</span>` : `<span class="tag ${toFix.some((c) => c.status === "fail") ? "fail" : "warn"}">${plural(fixes, "thing")} to fix</span>`}<span>Checked ${esc(report.checkedAt.replace("T", " ").slice(0, 16))} UTC</span><a class="again" href="?fresh=1">Check again</a></div></div>
 ${
