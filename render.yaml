@@ -1,0 +1,24 @@
+# Render Blueprint for citable.flisk.si on the free plan: render.com → New → Blueprint → flisk-sh/citable.
+# Nothing else to sign up for: no database (reports live in memory for an hour) and no AI key (every check is
+# deterministic; visitors take the fixes to their own AI). See DEPLOY.md.
+services:
+  - type: web
+    name: citable
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    autoDeploy: true
+    healthCheckPath: /ready
+    domains:
+      - citable.flisk.si
+    envVars:
+      - key: CITABLE_PUBLIC_URL
+        value: https://citable.flisk.si/
+      - key: CITABLE_PROXY
+        value: last-forwarded
+      - key: CITABLE_CHECKS_PER_HOUR
+        value: "30"
+      # Render free: 512 MB and 0.1 CPU. A check is mostly waiting on the network; eight at once stay far below both.
+      - key: CITABLE_MAX_CHECKS
+        value: "8"
