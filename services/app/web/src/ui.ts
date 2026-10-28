@@ -62,7 +62,7 @@ footer{margin-top:110px;border-top:1px solid var(--line);padding:28px 0 48px;col
 .tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 12px;font-weight:650;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c)}
 .again{margin-left:auto;font-weight:600;font-size:14px;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:6px 12px;color:var(--fg)}.again:hover{border-color:var(--accent);color:var(--accent)}
 .crawlers{grid-column:1/-1;border-top:1px solid var(--line);padding-top:22px}
-.crawlers h3,.group h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
+.crawlers h3,.split h3,.group h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
 .bots{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;list-style:none;margin:0;padding:0}
 .bots li{display:flex;gap:10px;align-items:center;background:var(--sunk);border-radius:10px;padding:9px 12px;font-size:14px;line-height:1.3}
 .bots li small{display:block;color:var(--faint);font-size:12px}
@@ -132,6 +132,21 @@ header.bar.stage{background:#07080c;border-bottom-color:#1d2029}header.bar.stage
 .check .meter .gain{grid-row:auto;width:auto;height:auto;overflow:visible;display:inline-block;background:color-mix(in srgb,var(--c) 14%,transparent)}
 @media (max-width:640px){.hero.stage .stats{grid-template-columns:1fr 1fr;margin-top:40px}.stats div{padding:20px 14px 22px 0}.stats div+div{padding-left:14px}.stats div:nth-child(3){padding-left:0;border-left:0}.stats div:nth-child(n+3){border-top:1px solid var(--line)}.sample .bots{grid-template-columns:1fr 1fr}}
 @media (min-width:980px){.hero.stage .sample{grid-column:2;grid-row:1/span 7;margin:0;justify-self:end;width:100%}.hero.stage .note{margin-top:12px}}
+.again{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}.again::before{content:"↻";font-size:15px;line-height:1}
+.crawlers h3 em,.split h3 em{font-style:normal;color:var(--faint);font-weight:600;letter-spacing:.04em;text-transform:none;margin-left:6px}
+.bots{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))}.bots li>span:not(.ic):not(.sr){min-width:0}.bots li>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bots li small{overflow:hidden;text-overflow:ellipsis}
+.summary.stage .bots li.fail{background:color-mix(in srgb,var(--fail) 12%,transparent);border-color:color-mix(in srgb,var(--fail) 35%,transparent)}
+.split{grid-column:1/-1;border-top:1px solid var(--line);padding-top:22px}
+.split ol{display:flex;gap:4px;list-style:none;margin:0;padding:0;height:12px}
+.split li{flex:var(--m) 1 0;min-width:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.split li i{display:block;height:100%;width:calc(var(--p)*1%);background:var(--c)}
+.split p{display:flex;gap:6px 16px;flex-wrap:wrap;margin:10px 0 0;font-size:12.5px;color:var(--faint)}.split p span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c);margin-right:6px}
+.ledger{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ledger>li{display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:start;padding:14px 20px}.ledger>li+li{border-top:1px solid var(--line)}
+.ledger .ic{margin-top:2px}.ledger b{font-size:15px;font-weight:650}.ledger .body p{margin:2px 0 0;color:var(--muted);font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.ledger details{margin-top:6px;font-size:13px}.ledger .pts{font:600 12.5px var(--mono);color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:999px;padding:2px 9px;white-space:nowrap;margin-top:1px}
+.badge{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:center}.badge h3{margin:0}.badge img{grid-row:2}.badge p{grid-column:2;grid-row:1;margin:0;font-size:13px;color:var(--faint);justify-self:end}
+.badge pre{grid-column:1/-1;user-select:all;-webkit-user-select:all;cursor:text;overflow-wrap:anywhere;word-break:normal;border:1px solid var(--line)}.badge pre:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+@media (max-width:640px){.bots{grid-template-columns:minmax(0,1fr);gap:6px}.bots li{padding:7px 10px}.bots li small{display:inline;margin-left:8px}.ledger>li{padding:12px 14px;gap:2px 10px}.badge p{display:none}.split p{font-size:12px}}
 `;
 
 /** The path the site is served under: empty online, /api/web behind Flisk's local proxy. */
@@ -291,6 +306,38 @@ function checkCard(c: Check): string {
 	}</div></section>`;
 }
 
+/** A passing check or a note as one row: a clean report reads as a short list, not ten cards. */
+function ledgerRow(c: Check): string {
+	return `<li class="${c.status}">${icon(c.status)}<div class="body"><b>${esc(c.title)}</b><p><span class="sr">${statusWord[c.status]}: </span>${esc(c.summary)}</p>${
+		c.details?.length
+			? `<details><summary>Details</summary><ul>${c.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>`
+			: ""
+	}</div>${c.max > 0 ? `<span class="pts">${Math.round(c.points)}/${c.max}</span>` : ""}</li>`;
+}
+
+/** The score split by check, each bar as wide as its weight and filled by the points it earned. */
+function split(checks: Check[]): string {
+	const scored = [...checks]
+		.filter((c) => c.max > 0)
+		.sort((a, b) => order(a) - order(b) || b.max - a.max);
+	const counts = (["pass", "warn", "fail"] as const)
+		.map((s) => [s, scored.filter((c) => c.status === s).length] as const)
+		.filter(([, n]) => n > 0);
+	const label: Record<string, string> = {
+		pass: "passing",
+		warn: "to improve",
+		fail: "to fix",
+	};
+	return `<div class="split"><h3>Points by check<em>${scored.length} checks, by weight</em></h3><ol aria-hidden="true">${scored
+		.map(
+			(c) =>
+				`<li class="${c.status}" style="--m:${c.max};--p:${Math.round((100 * c.points) / c.max)}" title="${esc(c.title)}: ${Math.round(c.points)} / ${c.max}"><i></i></li>`,
+		)
+		.join(
+			"",
+		)}</ol><p>${counts.map(([s, n]) => `<span class="${s}">${n} ${label[s]}</span>`).join("")}</p></div>`;
+}
+
 /** The text that hands a report's fixes to the visitor's own AI. */
 export function fixPrompt(report: Report): string {
 	const todo = report.checks.filter(
@@ -339,12 +386,22 @@ export function reportPage(report: Report, publicUrl: string): string {
 	const answers = report.crawlers.filter((c) => c.role === "answers");
 	const training = report.crawlers.filter((c) => c.role === "training");
 	const trainingBlocked = training.filter((c) => !c.allowed).length;
+	const answersBlocked = answers.filter((c) => !c.allowed).length;
 	const group = (title: string, list: Check[]) =>
 		list.length
 			? `<div class="group"><h3>${title} · ${list.length}</h3>${[...list]
 					.sort((a, b) => order(a) - order(b) || b.max - a.max)
 					.map(checkCard)
 					.join("")}</div>`
+			: "";
+	const ledger = (title: string, list: Check[]) =>
+		list.length
+			? `<div class="group"><h3>${title} · ${list.length}</h3><ul class="ledger">${[
+					...list,
+				]
+					.sort((a, b) => b.max - a.max)
+					.map(ledgerRow)
+					.join("")}</ul></div>`
 			: "";
 	return layout(
 		publicUrl,
@@ -362,9 +419,9 @@ export function reportPage(report: Report, publicUrl: string): string {
 <div class="tags">${fixes === 0 ? `<span class="tag pass">✓ Nothing to fix</span>` : `<span class="tag ${toFix.some((c) => c.status === "fail") ? "fail" : "warn"}">${plural(fixes, "thing")} to fix${worth > 0 ? `, worth up to ${worth} points` : ""}</span>`}<span>Checked ${esc(report.checkedAt.replace("T", " ").slice(0, 16))} UTC</span><a class="again" href="?fresh=1">Check again</a></div></div>
 ${
 	answers.length
-		? `<div class="crawlers"><h3>Answer engines</h3><ul class="bots">${answers.map((c) => `<li>${icon(c.allowed ? "pass" : "fail")}<span>${esc(c.token)}<small>${esc(c.owner)}</small></span><span class="sr">${c.allowed ? "allowed" : "blocked"}</span></li>`).join("")}</ul>${training.length ? `<p class="training">Training crawlers: ${training.length - trainingBlocked} allowed, ${trainingBlocked} blocked. Not scored: it does not change whether answers cite you.</p>` : ""}</div>`
+		? `<div class="crawlers"><h3>Answer engines<em>${answers.length - answersBlocked} of ${answers.length} allowed</em></h3><ul class="bots">${answers.map((c) => `<li class="${c.allowed ? "pass" : "fail"}">${icon(c.allowed ? "pass" : "fail")}<span>${esc(c.token)}<small>${esc(c.owner)}</small></span><span class="sr">${c.allowed ? "allowed" : "blocked"}</span></li>`).join("")}</ul>${training.length ? `<p class="training">Training crawlers: ${training.length - trainingBlocked} allowed, ${trainingBlocked} blocked. Not scored: it does not change whether answers cite you.</p>` : ""}</div>`
 		: ""
-}</div>
+}${report.partial ? "" : split(report.checks)}</div>
 ${report.partial ? `<div class="error">Partial report: the page answered ${report.partial}, so its contents were not checked.</div>` : ""}
 ${group("Fix first", toFix)}
 ${
@@ -374,9 +431,9 @@ ${
 <details><summary>The text it hands over</summary><pre>${esc(prompt)}</pre></details></div>`
 		: ""
 }
-${group("Passing", passing)}
-${group("Notes", notes)}
-<div class="badge"><h3>Show the score</h3><img src="${root}/badge/${esc(report.host)}.svg" alt="AI search score ${report.score}" height="20">
+${ledger("Passing", passing)}
+${ledger("Notes", notes)}
+<div class="badge"><h3>Show the score</h3><p>Click the code to select it</p><img src="${root}/badge/${esc(report.host)}.svg" alt="AI search score ${report.score}" height="20">
 <pre>[![AI search: ${report.score}/100](${esc(base)}/badge/${esc(report.host)}.svg)](${esc(base)}/${esc(report.host)})</pre></div></div>`,
 		report.host,
 	);
