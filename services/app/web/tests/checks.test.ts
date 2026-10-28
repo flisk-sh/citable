@@ -170,6 +170,23 @@ describe("checkSite", () => {
 		expect(report.score).toBe(0);
 	});
 
+	it("counts llms.txt links in linear time", async () => {
+		const site = goodSite();
+		site["https://acme.example/llms.txt"] = {
+			status: 200,
+			body: `# Acme\n\n- [Docs](https://acme.example/docs)\n${"](http://".repeat(22_000)}`,
+		};
+		const started = performance.now();
+		const report = await checkSite(
+			new URL("https://acme.example/"),
+			fakeFetcher(site),
+		);
+		expect(performance.now() - started).toBeLessThan(200);
+		expect(report.checks.find((c) => c.id === "llms-txt")?.summary).toContain(
+			"with 1 link",
+		);
+	});
+
 	it("marks slow pages", async () => {
 		const site = goodSite();
 		site["https://acme.example/"] = {
