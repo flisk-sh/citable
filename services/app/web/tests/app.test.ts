@@ -78,6 +78,17 @@ describe("pages", () => {
 		expect(calls.length).toBe(fetched);
 	});
 
+	it("says what each fix is worth, and the total", async () => {
+		const site = goodSite();
+		delete site["https://acme.example/llms.txt"];
+		const html = await (
+			await createApp({ fetcher: fakeFetcher(site) }).request("/acme.example")
+		).text();
+		expect(html).toContain("1 thing to fix, worth up to 5 points");
+		expect(html).toContain('<span class="gain">+5</span>');
+		expect(html).toContain("Fix first · 1");
+	});
+
 	it("escapes what the site sends", async () => {
 		const site = goodSite();
 		site["https://acme.example/"] = {

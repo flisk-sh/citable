@@ -1,6 +1,6 @@
 // The pages, rendered on the server with no JavaScript: the home page with its form, a report, and the badge. The
 // Content-Security-Policy in index.ts allows no scripts at all.
-import type { Check, Report } from "./checks";
+import { type Check, CRAWLERS, type Report } from "./checks";
 import { esc, faqJsonLd, head, ICONS, type PageMeta } from "./seo";
 import { SITE } from "./site";
 
@@ -111,6 +111,27 @@ header.bar.stage{background:#07080c;border-bottom-color:#1d2029}header.bar.stage
 .cta{position:relative;overflow:hidden;background:linear-gradient(135deg,#1e2a6b,#3b1f73 60%,#0f3d2c);color:#fff}.cta .btn{background:#fff;color:#141413}.cta .btn:hover{background:#e7e9ff;color:#141413}.cta pre{background:rgba(0,0,0,.25)}
 .hero.stage{padding:48px 0 0}
 @media (min-width:980px){.hero.stage{padding:56px 0 64px}.hero.stage .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);column-gap:56px;align-items:center;text-align:left}.hero.stage .wrap>*{grid-column:1}.hero.stage .pill{justify-self:start}.hero.stage h1{margin:18px 0 16px;font-size:clamp(44px,4.6vw,62px)}.hero.stage .lede{margin:0 0 26px;font-size:18px}.hero.stage .addr{margin:0}.hero.stage .examples,.hero.stage .engines{justify-content:flex-start}.hero.stage .engines{margin-top:26px;gap:8px 18px;font-size:14px}.hero.stage .demo{grid-column:2;grid-row:1/span 6;margin:0;border-radius:16px;border-bottom:1px solid var(--line);box-shadow:0 30px 90px -30px rgba(124,92,255,.6)}}
+.note{margin:12px 0 0;font-size:13px;color:var(--faint)}.note b{color:var(--pass);font-weight:600}
+.sample{--fg:#141413;--muted:#5d5a53;--faint:#8f8b82;--line:#e6e3da;--sunk:#f3f1ec;--surface:#fff;--pass:#18794e;--warn:#b25d00;--fail:#c22a1f;margin:44px auto 0;max-width:560px;text-align:left;background:#fff;color:var(--fg);border-radius:18px;padding:18px;box-shadow:0 40px 100px -30px rgba(91,124,255,.65),0 0 0 1px rgba(255,255,255,.08)}
+.sample .top{display:flex;align-items:center;gap:10px;font:600 13px var(--mono);color:var(--muted);margin-bottom:14px}.sample .top em{margin-left:auto;font:600 11px ui-sans-serif,system-ui,sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);background:var(--sunk);border-radius:6px;padding:3px 8px}
+.sample .head{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.sample .ring{width:76px;height:76px}.sample .ring b{width:62px;height:62px;font-size:26px}.sample .ring small{font-size:10px;margin-top:2px}
+.sample .head p{margin:0;font-size:14px;color:var(--muted);line-height:1.4}.sample .head strong{display:block;font-size:18px;color:var(--fg);letter-spacing:-.01em}
+.sample ol{list-style:none;margin:8px 0 0;padding:0}.sample li{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.35}.sample li:last-child{border-bottom:0}
+.sample li small{grid-column:2;color:var(--faint);font-size:12.5px}.sample li .ic{grid-row:span 2}
+.gain{grid-row:span 2;font:700 12px var(--mono);color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.sample .bots{grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.sample .bots li{display:flex;border:0;padding:7px 9px;font-size:12.5px;gap:7px}.sample .bots .ic{width:18px;height:18px;font-size:10px}
+.hero.stage .stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:56px 0 0;border-top:1px solid var(--line);text-align:left}
+.stats div{padding:26px 22px 30px 0}.stats div+div{padding-left:22px;border-left:1px solid var(--line)}
+.stats b{display:block;font-size:clamp(34px,4.4vw,52px);line-height:1;font-weight:800;letter-spacing:-.04em}.stats span{display:block;margin-top:8px;color:var(--muted);font-size:14px;line-height:1.4;max-width:22ch}
+.film{margin:0;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#07080c;box-shadow:var(--shadow)}.film .chrome{display:flex;gap:7px;padding:12px 14px;border-bottom:1px solid #1d2029}.film .chrome i{width:11px;height:11px;border-radius:50%;background:#2a2d38}
+.film video,.film img{display:block;width:100%;height:auto}.film .still{display:none}
+@media (prefers-reduced-motion:reduce){.film video{display:none}.film .still{display:block}}
+.mini{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 16px;min-height:44px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font:600 13px var(--mono);color:var(--muted)}
+.mini i{font-style:normal;background:var(--sunk);border-radius:6px;padding:2px 7px}.mini .to{font-size:20px;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;letter-spacing:-.02em}.mini .lo{color:var(--fail)}.mini .hi{color:var(--pass)}
+.check .meter .gain{grid-row:auto;width:auto;height:auto;overflow:visible;display:inline-block;background:color-mix(in srgb,var(--c) 14%,transparent)}
+@media (max-width:640px){.hero.stage .stats{grid-template-columns:1fr 1fr;margin-top:40px}.stats div{padding:20px 14px 22px 0}.stats div+div{padding-left:14px}.stats div:nth-child(3){padding-left:0;border-left:0}.stats div:nth-child(n+3){border-top:1px solid var(--line)}.sample .bots{grid-template-columns:1fr 1fr}}
+@media (min-width:980px){.hero.stage .sample{grid-column:2;grid-row:1/span 7;margin:0;justify-self:end;width:100%}.hero.stage .note{margin-top:12px}}
 `;
 
 /** The path the site is served under: empty online, /api/web behind Flisk's local proxy. */
@@ -182,6 +203,28 @@ const ENGINES: [string, string][] = [
 	["Bing Copilot", "#a78bfa"],
 ];
 
+/** The hero's sample report: what a report looks like, with made-up results for a made-up site. */
+const sample = (
+	host: string,
+) => `<figure class="sample" aria-label="A sample report"><div class="top">${esc(host)}/acme.com<em>Sample report</em></div>
+<div class="head"><div class="ring fail" style="--s:41" role="img" aria-label="Score 41 of 100"><b>41<small>grade D</small></b></div><p><strong>acme.com</strong>3 things to fix, worth up to 34 points</p></div>
+<ol><li><span class="ic fail" aria-hidden="true">✕</span>AI crawlers allowed<span class="gain fail">+18</span><small>robots.txt blocks OAI-SearchBot and Claude-SearchBot</small></li>
+<li><span class="ic warn" aria-hidden="true">!</span>Readable without JavaScript<span class="gain warn">+11</span><small>Only 40 words in the HTML before scripts run</small></li>
+<li><span class="ic fail" aria-hidden="true">✕</span>llms.txt<span class="gain fail">+5</span><small>Not found at /llms.txt</small></li>
+<li><span class="ic pass" aria-hidden="true">✓</span>Title and description<span class="gain pass">10 / 10</span><small>Both present, at lengths engines show</small></li></ol>
+<ul class="bots"><li><span class="ic fail" aria-hidden="true">✕</span>ChatGPT</li><li><span class="ic fail" aria-hidden="true">✕</span>Claude</li><li><span class="ic pass" aria-hidden="true">✓</span>Perplexity</li><li><span class="ic pass" aria-hidden="true">✓</span>Google</li></ul></figure>`;
+
+/** The numbers under the hero, each true of every check. */
+const STATS: [string, string][] = [
+	["10", "checks, weighted by what decides a citation"],
+	[
+		`${CRAWLERS.filter((c) => c.role === "answers").length}`,
+		"answer-engine crawlers, read one by one",
+	],
+	["4", "requests at most, all of them GETs"],
+	["0", "accounts, models or stored pages"],
+];
+
 /** The home page; `noindex` when it answers an address that is not a site (404). */
 export function homePage(publicUrl: string, noindex = false): string {
 	const base = publicUrl.replace(/\/$/, "");
@@ -195,17 +238,21 @@ export function homePage(publicUrl: string, noindex = false): string {
 			noindex,
 		},
 		`<section class="hero stage"><div class="wrap">
-<span class="pill"><i></i>Free · no signup · open source</span>
+<span class="pill"><i></i>Open source · with an MCP server</span>
 <h1>Can AI answers <em class="grad">cite</em> your site?</h1>
 <p class="lede">Put <b>${esc(new URL(publicUrl).host)}/</b> in front of any address. Citable reads the page the way ChatGPT, Claude, Perplexity and Google's crawlers do, and tells you what keeps it out of their answers, with the fix.</p>
 ${form(publicUrl)}
+<p class="note"><b>●</b> Free score in seconds · No signup · Nothing stored</p>
 <p class="examples">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
 <p class="engines"><span>Checked crawler by crawler for</span>${ENGINES.map(([n, c]) => `<b style="--d:${c}"><i></i>${n}</b>`).join("")}</p>
-<figure class="demo"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline controls preload="metadata" aria-describedby="demo-text"></video>
-<figcaption id="demo-text" class="sr">A 23-second film: citable.flisk.si/ is typed in front of stripe.com in a browser, the report scores it 96 out of 100, the camera moves to a check and its fix, and a click on Ask Claude hands the fixes to your own AI.</figcaption></figure>
+${sample(new URL(publicUrl).host)}
+<div class="stats">${STATS.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
 </div></section><div class="wrap">
+<section class="block"><p class="kicker">See it run</p><h2>From address to fix in 23 seconds.</h2><p class="sub">Type the prefix, read the score, open a fix, and hand the whole list to your own AI.</p>
+<figure class="film"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline controls preload="metadata" aria-describedby="demo-text"></video>
+<figcaption id="demo-text" class="sr">A 23-second film: citable.flisk.si/ is typed in front of stripe.com in a browser, the report scores it 96 out of 100, the camera moves to a check and its fix, and a click on Ask Claude hands the fixes to your own AI.</figcaption></figure></section>
 <section class="block" id="how"><p class="kicker">How it works</p><h2>One address, one honest report.</h2><p class="sub">No account, no browser extension, no model guessing. Citable fetches what a crawler fetches and reads it the same way.</p>
-<div class="steps"><div><b>Prefix any address</b><p>citable.flisk.si/your-site.com, or paste it in the box above. Any page works, not only home pages.</p></div><div><b>Read it like a crawler</b><p>The page, robots.txt, llms.txt and the sitemap, with no JavaScript, as the seven answer crawlers see them.</p></div><div><b>Fix what blocks citations</b><p>Each problem comes with the exact change to make, and a button that hands the list to your own AI.</p></div></div></section>
+<div class="steps"><div><p class="mini" aria-hidden="true">${esc(new URL(publicUrl).host)}/<i>acme.com</i></p><b>Prefix any address</b><p>citable.flisk.si/your-site.com, or paste it in the box above. Any page works, not only home pages.</p></div><div><p class="mini" aria-hidden="true"><i>robots.txt</i><i>llms.txt</i><i>sitemap.xml</i></p><b>Read it like a crawler</b><p>The page, robots.txt, llms.txt and the sitemap, with no JavaScript, as the seven answer crawlers see them.</p></div><div><p class="mini" aria-hidden="true"><span class="to lo">41</span>→<span class="to hi">92</span> after the fixes</p><b>Fix what blocks citations</b><p>Each problem comes with the exact change to make, and a button that hands the list to your own AI.</p></div></div></section>
 <section class="block"><p class="kicker">What it checks</p><h2>Ten checks, scored out of 100.</h2><p class="sub">Weighted by how much each one decides whether an answer engine can quote you at all.</p>
 <div class="grid">${CHECKS.map(([t, w, d]) => `<div class="tile" style="--w:${w * 4}"><span class="w">${w}</span><b>${t}</b><p>${d}</p></div>`).join("")}</div></section>
 <section class="block narrow"><p class="kicker">In your AI</p><h2>Ask your assistant directly.</h2><p class="sub">Citable is also an MCP server. Add it once, then ask "can AI cite example.com?"</p>
@@ -229,10 +276,13 @@ const icon = (s: Check["status"]) =>
 	`<span class="ic ${s}" aria-hidden="true">${glyph[s]}</span>`;
 
 function checkCard(c: Check): string {
+	const gain = Math.round(c.max - c.points);
 	const meter =
-		c.max > 0
-			? `<span class="meter"><span style="--p:${Math.round((100 * c.points) / c.max)}"><i></i></span>${Math.round(c.points)} / ${c.max}</span>`
-			: `<span class="meter">${statusWord[c.status]}</span>`;
+		c.max > 0 && gain > 0 && (c.status === "fail" || c.status === "warn")
+			? `<span class="meter"><span class="gain">+${gain}</span><span style="--p:${Math.round((100 * c.points) / c.max)}"><i></i></span>${Math.round(c.points)} / ${c.max}</span>`
+			: c.max > 0
+				? `<span class="meter"><span style="--p:${Math.round((100 * c.points) / c.max)}"><i></i></span>${Math.round(c.points)} / ${c.max}</span>`
+				: `<span class="meter">${statusWord[c.status]}</span>`;
 	return `<section class="check ${c.status}">${icon(c.status)}<h4>${esc(c.title)}${meter}</h4>
 <div class="body"><p><span class="sr">${statusWord[c.status]}: </span>${esc(c.summary)}</p>${c.fix ? `<div class="fix"><strong>How to fix</strong>${esc(c.fix)}</div>` : ""}${
 		c.details?.length
@@ -281,6 +331,7 @@ export function reportPage(report: Report, publicUrl: string): string {
 		(c) => c.status === "fail" || c.status === "warn",
 	);
 	const fixes = toFix.length;
+	const worth = Math.round(toFix.reduce((n, c) => n + c.max - c.points, 0));
 	const passing = report.checks.filter((c) => c.status === "pass");
 	const notes = report.checks.filter((c) => c.status === "info");
 	const prompt = fixPrompt(report);
@@ -308,14 +359,14 @@ export function reportPage(report: Report, publicUrl: string): string {
 		`<div class="wrap narrow">
 <div class="summary stage"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="Score ${report.score} of 100"><b>${report.score}<small>grade ${report.grade}</small></b></div>
 <div><p class="host">${esc(report.host)}</p><p class="final">${esc(report.finalUrl)}</p>
-<div class="tags">${fixes === 0 ? `<span class="tag pass">✓ Nothing to fix</span>` : `<span class="tag ${toFix.some((c) => c.status === "fail") ? "fail" : "warn"}">${plural(fixes, "thing")} to fix</span>`}<span>Checked ${esc(report.checkedAt.replace("T", " ").slice(0, 16))} UTC</span><a class="again" href="?fresh=1">Check again</a></div></div>
+<div class="tags">${fixes === 0 ? `<span class="tag pass">✓ Nothing to fix</span>` : `<span class="tag ${toFix.some((c) => c.status === "fail") ? "fail" : "warn"}">${plural(fixes, "thing")} to fix${worth > 0 ? `, worth up to ${worth} points` : ""}</span>`}<span>Checked ${esc(report.checkedAt.replace("T", " ").slice(0, 16))} UTC</span><a class="again" href="?fresh=1">Check again</a></div></div>
 ${
 	answers.length
 		? `<div class="crawlers"><h3>Answer engines</h3><ul class="bots">${answers.map((c) => `<li>${icon(c.allowed ? "pass" : "fail")}<span>${esc(c.token)}<small>${esc(c.owner)}</small></span><span class="sr">${c.allowed ? "allowed" : "blocked"}</span></li>`).join("")}</ul>${training.length ? `<p class="training">Training crawlers: ${training.length - trainingBlocked} allowed, ${trainingBlocked} blocked. Not scored: it does not change whether answers cite you.</p>` : ""}</div>`
 		: ""
 }</div>
 ${report.partial ? `<div class="error">Partial report: the page answered ${report.partial}, so its contents were not checked.</div>` : ""}
-${group("To fix", toFix)}
+${group("Fix first", toFix)}
 ${
 	fixes > 0
 		? `<div class="cta"><h3>Fix it with your AI</h3><p>Citable never calls a model. Hand the list to yours, with the exact fixes.</p>
