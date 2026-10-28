@@ -6,6 +6,8 @@
 https://stripe.com/pricing  →  https://citable.flisk.si/stripe.com/pricing
 ```
 
+[![How Citable works: put citable.flisk.si/ in front of stripe.com, get a score with each check and its fix, then hand the fixes to your own AI](docs/demo.gif)](https://citable.flisk.si)
+
 Citable reads the page the way ChatGPT search, Claude, Perplexity, Google AI Overviews and Copilot's crawlers do, scores it out of 100, and says what keeps it out of their answers, with the fix.
 
 - **Crawler access, one engine at a time.** robots.txt is read as RFC 9309 says, for each answer crawler (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Googlebot, Bingbot). Training crawlers (GPTBot, ClaudeBot, Google-Extended…) are listed apart and not scored: blocking them is a choice.
@@ -55,3 +57,5 @@ At most four GET requests to the site: the page, `/robots.txt`, `/llms.txt` and 
 citable.flisk.si is one Render free web service from [`render.yaml`](render.yaml) and the root [`Dockerfile`](Dockerfile). [DEPLOY.md](DEPLOY.md) has the steps.
 
 Built and run with [Flisk](https://github.com/flisk-sh/flisk). MIT licensed.
+
+The clip on the home page and above is drawn by `services/app/web/scripts/video.ts` (`bun run video`, needs ffmpeg).

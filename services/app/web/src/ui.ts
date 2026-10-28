@@ -34,6 +34,8 @@ h2{font-size:20px;margin:36px 0 8px}pre{background:var(--card);border:1px solid 
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.top{flex-wrap:wrap;gap:12px}.top form{flex:0 1 380px;flex-wrap:nowrap}.top input[type=text]{flex:1 1 auto}.top input[type=text],.top button{padding:8px 12px}
 footer{margin-top:48px;color:var(--muted);font-size:14px}
 dt{font-weight:700;margin-top:14px}dd{margin:4px 0 0}
+.demo{margin:24px 0 0;max-width:560px}.demo video,.demo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:var(--card)}.demo .still{display:none}
+@media (prefers-reduced-motion:reduce){.demo video{display:none}.demo .still{display:block}}
 .pass{--c:var(--pass)}.warn{--c:var(--warn)}.fail{--c:var(--fail)}.info{--c:var(--info)}
 `;
 
@@ -71,6 +73,8 @@ export function homePage(publicUrl: string, noindex = false): string {
 <p class="lede">Put <b>citable.flisk.si/</b> in front of any address. Citable reads the page the way ChatGPT, Claude, Perplexity and Google's crawlers do, and tells you what keeps it out of their answers, with the fix.</p>
 ${form(root)}
 <p class="chips">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
+<figure class="demo"><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline preload="metadata" aria-describedby="demo-text"></video>
+<figcaption id="demo-text" class="sr">A 13-second clip: citable.flisk.si/ is typed in front of stripe.com, the report scores it 96 out of 100, lists each check with its fix, and offers Ask ChatGPT and Ask Claude buttons.</figcaption></figure>
 <h2>What it checks</h2>
 <ul>
 <li>robots.txt for each answer engine's crawler, apart from the training crawlers you may want to keep out</li>

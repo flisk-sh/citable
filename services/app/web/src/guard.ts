@@ -114,6 +114,7 @@ export function securityHeaders(): Record<string, string> {
 			"default-src 'none'",
 			"style-src 'unsafe-inline'",
 			"img-src 'self'",
+			"media-src 'self'",
 			"base-uri 'none'",
 			"form-action 'self'",
 			"frame-ancestors 'none'",

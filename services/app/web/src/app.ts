@@ -14,6 +14,7 @@ import { handleMcp } from "./mcp";
 import { type Fetcher, normalizeTarget, safeFetch } from "./net";
 import { ICONS, robotsTxt, securityTxt, sitemapXml, webManifest } from "./seo";
 import { aboutPage, badge, EXAMPLES, homePage, reportPage } from "./ui";
+import { VIDEO } from "./video.generated";
 
 export interface AppOptions {
 	fetcher?: Fetcher;
@@ -40,6 +41,7 @@ const RESERVED = new Set([
 	"site.webmanifest",
 	".well-known",
 	...Object.values(ICONS),
+	...Object.keys(VIDEO),
 ]);
 
 export function createApp(options: AppOptions = {}) {
@@ -158,6 +160,32 @@ export function createApp(options: AppOptions = {}) {
 	app.get("/.well-known/security.txt", (c) =>
 		c.text(securityTxt(siteOf(c).replace(/\/$/, ""))),
 	);
+	// The how-it-works clip. Safari plays a video only from a server that answers byte ranges.
+	for (const [name, file] of Object.entries(VIDEO)) {
+		const body = Buffer.from(file.base64, "base64");
+		app.get(`/${name}`, (c) => {
+			const headers = {
+				"content-type": file.type,
+				"cache-control": "public, max-age=604800",
+				"accept-ranges": "bytes",
+			};
+			const range = /^bytes=(\d*)-(\d*)$/.exec(c.req.header("range") ?? "");
+			if (!range || (range[1] === "" && range[2] === ""))
+				return c.body(body, 200, headers);
+			const start =
+				range[1] === "" ? body.length - Number(range[2]) : Number(range[1]);
+			const end =
+				range[1] === "" || range[2] === ""
+					? body.length - 1
+					: Math.min(Number(range[2]), body.length - 1);
+			if (start < 0 || start > end)
+				return c.body(null, 416, { "content-range": `bytes */${body.length}` });
+			return c.body(body.subarray(start, end + 1), 206, {
+				...headers,
+				"content-range": `bytes ${start}-${end}/${body.length}`,
+			});
+		});
+	}
 	for (const name of Object.values(ICONS)) {
 		const asset = ASSETS[name];
 		const body = Buffer.from(asset.base64, "base64");
