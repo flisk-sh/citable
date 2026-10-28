@@ -103,11 +103,14 @@ describe("files for crawlers", () => {
 	it("serves the how-it-works clip from the home page, with byte ranges for Safari", async () => {
 		const home = await page("/");
 		expect(home).toContain('<video src="/demo.mp4"');
-		expect(home).toContain("autoplay muted loop playsinline");
+		expect(home).toContain("autoplay muted loop playsinline controls");
 		const full = await app.request("/demo.mp4");
 		expect(full.headers.get("content-type")).toBe("video/mp4");
 		expect(full.headers.get("accept-ranges")).toBe("bytes");
-		const size = (await full.arrayBuffer()).byteLength;
+		const body = Buffer.from(await full.arrayBuffer());
+		const size = body.byteLength;
+		// the narration: an AAC track, which the controls unmute
+		expect(body.includes("mp4a")).toBe(true);
 		const part = await app.request("/demo.mp4", {
 			headers: { range: "bytes=0-1" },
 		});
