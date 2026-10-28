@@ -1,7 +1,7 @@
 // The report: what an AI answer engine needs before it can read a page and cite it, checked from the outside the way a
 // crawler sees it. Every check is deterministic (no model) and says how to fix what it finds. All I/O goes through the
 // Fetcher, so tests/checks.test.ts runs whole reports against fixtures.
-import { readPage, schemaTypes } from "./html";
+import { clip, readPage, schemaTypes } from "./html";
 import type { Fetched, Fetcher } from "./net";
 import { isAllowed, parseRobots, type Robots } from "./robots";
 
@@ -178,7 +178,7 @@ export async function checkSite(
 			10,
 		),
 		ofPage(
-			() => headingsCheck(facts.h1, facts.h2Count),
+			() => headingsCheck(facts.h1, facts.h1Count, facts.h2Count),
 			"headings",
 			"Headings",
 			5,
@@ -280,8 +280,8 @@ function indexableCheck(page: Fetched, metaRobots: string, final: URL): Check {
 	const directives = `${metaRobots}, ${header}`.toLowerCase();
 	const details = [
 		`status ${page.status}`,
-		`meta robots: ${metaRobots || "none"}`,
-		`X-Robots-Tag: ${header || "none"}`,
+		`meta robots: ${clip(metaRobots) || "none"}`,
+		`X-Robots-Tag: ${clip(header) || "none"}`,
 		`${final.protocol === "https:" ? "HTTPS" : "plain HTTP"}`,
 	];
 	if (page.status === 401 || page.status === 403 || page.status === 429) {
@@ -479,10 +479,10 @@ function structuredDataCheck(blocks: string[]): Check {
 	};
 }
 
-function headingsCheck(h1: string[], h2Count: number): Check {
+function headingsCheck(h1: string[], h1Count: number, h2Count: number): Check {
 	const max = 5;
 	const details = [...h1.map((h) => `h1: ${h || "(empty)"}`), `${h2Count} h2`];
-	if (h1.length === 1 && h1[0] && h2Count > 0) {
+	if (h1Count === 1 && h1[0] && h2Count > 0) {
 		return {
 			id: "headings",
 			title: "Headings",
@@ -494,10 +494,10 @@ function headingsCheck(h1: string[], h2Count: number): Check {
 		};
 	}
 	const summary =
-		h1.length === 0
+		h1Count === 0
 			? "No h1."
-			: h1.length > 1
-				? `${h1.length} h1 headings.`
+			: h1Count > 1
+				? `${h1Count} h1 headings.`
 				: !h1[0]
 					? "The h1 is empty."
 					: "No h2 sections under the h1.";
@@ -574,11 +574,11 @@ function sitemapCheck(sitemap: Fetched, listed: boolean): Check {
 			points: listed ? max : 4,
 			max,
 			summary: listed
-				? `Listed in robots.txt: ${sitemap.finalUrl}`
-				: `Found at ${sitemap.finalUrl}, but robots.txt does not list it.`,
+				? `Listed in robots.txt: ${clip(sitemap.finalUrl, 2000)}`
+				: `Found at ${clip(sitemap.finalUrl, 2000)}, but robots.txt does not list it.`,
 			fix: listed
 				? undefined
-				: `Add "Sitemap: ${sitemap.finalUrl}" to robots.txt.`,
+				: `Add "Sitemap: ${clip(sitemap.finalUrl, 2000)}" to robots.txt.`,
 		};
 	}
 	return {
@@ -588,7 +588,7 @@ function sitemapCheck(sitemap: Fetched, listed: boolean): Check {
 		points: 0,
 		max,
 		summary: listed
-			? `robots.txt lists a sitemap, but ${sitemap.finalUrl} is not one (${sitemap.status || sitemap.error}).`
+			? `robots.txt lists a sitemap, but ${clip(sitemap.finalUrl, 2000)} is not one (${sitemap.status || sitemap.error}).`
 			: "No sitemap at /sitemap.xml and none listed in robots.txt.",
 		fix: 'Publish an XML sitemap and list it in robots.txt with a "Sitemap:" line, so crawlers find every page, not only the linked ones.',
 	};
@@ -608,7 +608,7 @@ function llmsCheck(llms: Fetched): Check {
 			status: "pass",
 			points: max,
 			max,
-			summary: `Found at ${llms.finalUrl}, with ${links} link${links === 1 ? "" : "s"}.`,
+			summary: `Found at ${clip(llms.finalUrl, 2000)}, with ${links} link${links === 1 ? "" : "s"}.`,
 			details: [note],
 		};
 	}

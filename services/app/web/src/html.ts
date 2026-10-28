@@ -8,7 +8,9 @@ export interface PageFacts {
 	lang: string;
 	canonical: string;
 	metaRobots: string;
+	/** The first few h1 headings; h1Count counts them all. */
 	h1: string[];
+	h1Count: number;
 	h2Count: number;
 	jsonLd: string[];
 	og: Record<string, string>;
@@ -16,6 +18,15 @@ export interface PageFacts {
 	words: number;
 	scripts: number;
 }
+
+/** How much of what a page says ends up in a report, which is kept in memory and shown on citable's own domain. */
+export const MAX_TEXT = 300;
+const MAX_H1 = 10;
+const MAX_TYPES = 20;
+
+/** `s` cut to `max` characters, marked with an ellipsis when it was longer. */
+export const clip = (s: string, max = MAX_TEXT) =>
+	s.length > max ? `${s.slice(0, max - 1)}…` : s;
 
 // Scripts are skipped by their own handler: an element keeps only one end-tag handler, so two would overwrite each other.
 const SKIPPED = "style, noscript, template, svg";
@@ -28,6 +39,7 @@ export async function readPage(html: string): Promise<PageFacts> {
 		canonical: "",
 		metaRobots: "",
 		h1: [],
+		h1Count: 0,
 		h2Count: 0,
 		jsonLd: [],
 		og: {},
@@ -89,7 +101,9 @@ export async function readPage(html: string): Promise<PageFacts> {
 				e.onEndTag(() => {
 					h1Depth--;
 					if (h1Depth === 0) {
-						facts.h1.push(h1Text.replace(/\s+/g, " ").trim());
+						facts.h1Count++;
+						if (facts.h1.length < MAX_H1)
+							facts.h1.push(h1Text.replace(/\s+/g, " ").trim());
 						h1Text = "";
 					}
 				});
@@ -135,9 +149,10 @@ export async function readPage(html: string): Promise<PageFacts> {
 		});
 
 	await rewriter.transform(new Response(html)).text();
-	facts.title = decode(facts.title.replace(/\s+/g, " ").trim());
-	facts.description = decode(facts.description.trim());
-	facts.h1 = facts.h1.map(decode);
+	facts.title = clip(decode(facts.title.replace(/\s+/g, " ").trim()));
+	facts.description = clip(decode(facts.description.trim()));
+	facts.h1 = facts.h1.map((h) => clip(decode(h)));
+	facts.canonical = clip(facts.canonical, 2000);
 	facts.words = decode(text.join(" "))
 		.split(/\s+/)
 		.filter((w) => /\p{L}|\p{N}/u.test(w)).length;
@@ -184,7 +199,8 @@ export function schemaTypes(blocks: string[]): {
 		const record = node as Record<string, unknown>;
 		const type = record["@type"];
 		for (const t of Array.isArray(type) ? type : [type])
-			if (typeof t === "string") types.add(t);
+			if (typeof t === "string" && types.size < MAX_TYPES)
+				types.add(clip(t, 60));
 		if (record["@graph"]) visit(record["@graph"]);
 	};
 	for (const block of blocks) {
