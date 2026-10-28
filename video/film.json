@@ -18,9 +18,9 @@
 			"url": "https://citable.flisk.si/stripe.com",
 			"settle": 6,
 			"rects": {
-				"score": ".score",
+				"score": ".summary",
 				"fixcheck": ".check.warn, .check.fail",
-				"ask": "h2 + p + .row",
+				"ask": ".cta",
 				"claude": "a.btn[href^='https://claude.ai']"
 			}
 		}
