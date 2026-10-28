@@ -26,6 +26,16 @@ describe("isPrivateAddress", () => {
 		"fe80::1",
 		"::ffff:127.0.0.1",
 		"64:ff9b::a00:1",
+		// The URL parser's own spelling of ::ffff:127.0.0.1 and ::ffff:169.254.169.254, and other forms that embed IPv4.
+		"::ffff:7f00:1",
+		"::ffff:a9fe:a9fe",
+		"0:0:0:0:0:ffff:7f00:1",
+		"::7f00:1",
+		"::127.0.0.1",
+		"::ffff:0:a9fe:a9fe",
+		"2002:a9fe:a9fe::1",
+		"2001:0:4136:e378::1",
+		"fec0::1",
 		"not-an-ip",
 	])("refuses %s", (address) => {
 		expect(isPrivateAddress(address)).toBe(true);
@@ -37,6 +47,8 @@ describe("isPrivateAddress", () => {
 		"172.32.0.1",
 		"2606:4700::1111",
 		"::ffff:8.8.8.8",
+		"::ffff:808:808",
+		"2002:808:808::1",
 	])("allows %s", (address) => {
 		expect(isPrivateAddress(address)).toBe(false);
 	});
@@ -84,6 +96,17 @@ describe("refusal", () => {
 		expect(await refusal(new URL("http://[::1]/"), resolve)).toContain(
 			"private",
 		);
+	});
+
+	it("refuses IPv6 literals that embed a private IPv4 address", async () => {
+		const resolve = resolvesTo("1.1.1.1") as never;
+		for (const href of [
+			"http://[::ffff:127.0.0.1]/",
+			"http://[::ffff:169.254.169.254]/latest/meta-data/",
+			"http://[::ffff:10.0.0.1]/",
+			"http://[::127.0.0.1]/",
+		])
+			expect(await refusal(new URL(href), resolve)).toContain("private");
 	});
 
 	it("refuses a name that does not resolve", async () => {

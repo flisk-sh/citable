@@ -43,20 +43,50 @@ export function isPrivateAddress(address: string): boolean {
 		);
 	}
 	if (kind === 6) {
-		const v6 = address.toLowerCase();
-		const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(v6);
-		if (mapped) return isPrivateAddress(mapped[1]);
+		const h = hextets(address);
+		if (!h) return true;
+		const v4 = (i: number) =>
+			`${h[i] >> 8}.${h[i] & 255}.${h[i + 1] >> 8}.${h[i + 1] & 255}`;
+		const zeros = (n: number) => h.slice(0, n).every((x) => x === 0);
+		// The URL parser writes ::ffff:127.0.0.1 as ::ffff:7f00:1, so embedded IPv4 is read from the hextets, never the
+		// text: IPv4-mapped (::ffff:0:0/96), IPv4-compatible (::/96, which holds :: and ::1), IPv4-translated
+		// (::ffff:0:0:0/96) and 6to4 (2002::/16) all reach the IPv4 address inside them.
+		if (zeros(5) && h[5] === 0xffff) return isPrivateAddress(v4(6));
+		if (zeros(6)) return isPrivateAddress(v4(6));
+		if (zeros(4) && h[4] === 0xffff && h[5] === 0)
+			return isPrivateAddress(v4(6));
+		if (h[0] === 0x2002) return isPrivateAddress(v4(1));
 		return (
-			v6 === "::" ||
-			v6 === "::1" ||
-			v6.startsWith("fc") ||
-			v6.startsWith("fd") ||
-			/^fe[89ab]/.test(v6) ||
-			v6.startsWith("ff") ||
-			v6.startsWith("64:ff9b:")
+			(h[0] & 0xfe00) === 0xfc00 || // fc00::/7 unique local
+			(h[0] & 0xffc0) === 0xfe80 || // fe80::/10 link-local
+			(h[0] & 0xffc0) === 0xfec0 || // fec0::/10 old site-local
+			(h[0] & 0xff00) === 0xff00 || // multicast
+			(h[0] === 0x64 && h[1] === 0xff9b) || // NAT64, which reaches any IPv4 address
+			(h[0] === 0x100 && h[1] === 0 && h[2] === 0 && h[3] === 0) || // 100::/64 discard
+			(h[0] === 0x2001 && (h[1] === 0 || h[1] === 0xdb8)) // Teredo, documentation
 		);
 	}
 	return true;
+}
+
+/** The eight 16-bit groups of an IPv6 address (a trailing dotted IPv4 part counts as two), or undefined. */
+function hextets(address: string): number[] | undefined {
+	let text = address.toLowerCase().replace(/%.*$/, "");
+	const dotted = /(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(text);
+	if (dotted) {
+		const [a, b, c, d] = dotted.slice(1).map(Number);
+		text = `${text.slice(0, dotted.index)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+	}
+	const [left, right, extra] = text.split("::");
+	if (extra !== undefined) return undefined;
+	const head = left ? left.split(":") : [];
+	const tail = right ? right.split(":") : [];
+	const fill = right === undefined ? 0 : 8 - head.length - tail.length;
+	if (fill < 0) return undefined;
+	const groups = [...head, ...Array(fill).fill("0"), ...tail];
+	if (groups.length !== 8 || groups.some((g) => !/^[0-9a-f]{1,4}$/.test(g)))
+		return undefined;
+	return groups.map((g) => Number.parseInt(g, 16));
 }
 
 /** Why a URL may not be fetched, or undefined when it may. Resolves the host name. */
