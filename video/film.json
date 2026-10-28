@@ -34,7 +34,9 @@
 				"Can AI answers",
 				"cite your site?"
 			],
-			"pill": "citable.flisk.si/<b>example.com</b>"
+			"pill": "citable.flisk.si/<b>example.com</b>",
+			"vo": "Can AI answers cite your site?",
+			"voAt": 0.4
 		},
 		{
 			"kind": "browser",
@@ -97,7 +99,8 @@
 					4.0,
 					"Put citable.flisk.si/ in front of any address"
 				]
-			]
+			],
+			"vo": "Put citable dot flisk dot s i before any address."
 		},
 		{
 			"kind": "browser",
@@ -149,7 +152,8 @@
 					3.8,
 					"A score for AI search, crawler by crawler"
 				]
-			]
+			],
+			"vo": "You get a score for AI search, crawler by crawler."
 		},
 		{
 			"kind": "browser",
@@ -203,7 +207,8 @@
 					4.4,
 					"Every problem comes with its fix"
 				]
-			]
+			],
+			"vo": "Every problem it finds comes with the exact fix."
 		},
 		{
 			"kind": "browser",
@@ -278,7 +283,8 @@
 					4.4,
 					"@report.ask:s1.8"
 				]
-			]
+			],
+			"vo": "Then hand the whole list to your own AI, in one click."
 		},
 		{
 			"kind": "card",
@@ -288,7 +294,8 @@
 				"Free. No signup."
 			],
 			"sub": "Open source \u00b7 nothing stored \u00b7 also an MCP server",
-			"pill": "citable.flisk.si/<b>your-site.com</b>"
+			"pill": "citable.flisk.si/<b>your-site.com</b>",
+			"vo": "Free, with no signup."
 		}
 	]
 }

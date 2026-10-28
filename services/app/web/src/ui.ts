@@ -201,7 +201,7 @@ export function homePage(publicUrl: string, noindex = false): string {
 ${form(publicUrl)}
 <p class="examples">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
 <p class="engines"><span>Checked crawler by crawler for</span>${ENGINES.map(([n, c]) => `<b style="--d:${c}"><i></i>${n}</b>`).join("")}</p>
-<figure class="demo"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline preload="metadata" aria-describedby="demo-text"></video>
+<figure class="demo"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline controls preload="metadata" aria-describedby="demo-text"></video>
 <figcaption id="demo-text" class="sr">A 23-second film: citable.flisk.si/ is typed in front of stripe.com in a browser, the report scores it 96 out of 100, the camera moves to a check and its fix, and a click on Ask Claude hands the fixes to your own AI.</figcaption></figure>
 </div></section><div class="wrap">
 <section class="block" id="how"><p class="kicker">How it works</p><h2>One address, one honest report.</h2><p class="sub">No account, no browser extension, no model guessing. Citable fetches what a crawler fetches and reads it the same way.</p>
