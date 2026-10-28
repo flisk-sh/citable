@@ -1,15 +1,8 @@
 // The pages, rendered on the server with no JavaScript: the home page with its form, a report, and the badge. The
 // Content-Security-Policy in index.ts allows no scripts at all.
 import type { Check, Report } from "./checks";
-
-const esc = (s: string) =>
-	s.replace(
-		/[&<>"']/g,
-		(c) =>
-			({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-				c
-			] as string,
-	);
+import { esc, faqJsonLd, head, type PageMeta } from "./seo";
+import { SITE } from "./site";
 
 export const EXAMPLES = ["stripe.com", "vercel.com", "nytimes.com", "flisk.sh"];
 
@@ -40,6 +33,7 @@ h2{font-size:20px;margin:36px 0 8px}pre{background:var(--card);border:1px solid 
 .error{border:1px solid var(--fail);color:var(--fail);border-radius:12px;padding:14px 16px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.top{flex-wrap:wrap;gap:12px}.top form{flex:0 1 380px;flex-wrap:nowrap}.top input[type=text]{flex:1 1 auto}.top input[type=text],.top button{padding:8px 12px}
 footer{margin-top:48px;color:var(--muted);font-size:14px}
+dt{font-weight:700;margin-top:14px}dd{margin:4px 0 0}
 .pass{--c:var(--pass)}.warn{--c:var(--warn)}.fail{--c:var(--fail)}.info{--c:var(--info)}
 `;
 
@@ -47,30 +41,32 @@ footer{margin-top:48px;color:var(--muted);font-size:14px}
 const rootOf = (publicUrl: string) =>
 	new URL(publicUrl).pathname.replace(/\/$/, "");
 
-function layout(
-	title: string,
-	description: string,
-	body: string,
-	publicUrl: string,
-): string {
+/** `publicUrl` is the site's own address, ending in a slash; `meta.path` is the page under it. */
+function layout(publicUrl: string, meta: PageMeta, body: string): string {
+	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
-	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title><meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${esc(publicUrl)}"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}">
+	return `<!doctype html><html lang="${SITE.lang}"><head>
+${head(base, meta)}
 <style>${STYLE}</style></head><body><main>${body}
-<footer>Citable reads pages the way an AI crawler does: no JavaScript, no model, nothing stored. <a href="https://github.com/flisk-sh/citable">Open source</a>, built and run with <a href="https://flisk.sh">Flisk</a>. · <a href="${root}/about">About the checker</a></footer>
+<footer>Citable reads pages the way an AI crawler does: no JavaScript, no model, nothing stored. <a href="${SITE.repo}">Open source</a>, built and run with <a href="${SITE.author.url}">Flisk</a>. · <a href="${root}/about">About the checker</a></footer>
 </main></body></html>`;
 }
 
 const form = (root: string, value = "") =>
 	`<form action="${root}/check" method="get"><input type="text" name="url" value="${esc(value)}" placeholder="example.com" aria-label="Site address" autocomplete="url" inputmode="url" required><button type="submit">Check</button></form>`;
 
-export function homePage(publicUrl: string): string {
+/** The home page; `noindex` when it answers an address that is not a site (404). */
+export function homePage(publicUrl: string, noindex = false): string {
 	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
 	return layout(
-		"Citable: can AI answers cite your site?",
-		"Check whether ChatGPT, Claude, Perplexity and Google AI Overviews can read and cite any page. Free, no signup.",
+		publicUrl,
+		{
+			path: "",
+			title: `${SITE.name}: ${SITE.tagline}`,
+			description: SITE.description,
+			noindex,
+		},
 		`<h1>Can AI answers cite your site?</h1>
 <p class="lede">Put <b>citable.flisk.si/</b> in front of any address. Citable reads the page the way ChatGPT, Claude, Perplexity and Google's crawlers do, and tells you what keeps it out of their answers, with the fix.</p>
 ${form(root)}
@@ -85,7 +81,6 @@ ${form(root)}
 <h2>In your AI</h2>
 <p>Citable is also an MCP server. Ask your assistant "can AI cite example.com?":</p>
 <pre>claude mcp add --transport http citable ${esc(base)}/mcp</pre>`,
-		publicUrl,
 	);
 }
 
@@ -125,14 +120,18 @@ const scoreClass = (score: number) =>
 export function reportPage(report: Report, publicUrl: string): string {
 	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
-	const self = `${base}/${report.host}${new URL(report.url).pathname.replace(/^\/$/, "")}`;
-	const head = `<div class="top"><a href="${root}/">Citable</a>${form(root, report.host)}</div>`;
+	const path = `${report.host}${new URL(report.url).pathname.replace(/^\/$/, "")}`;
+	const top = `<div class="top"><a href="${root}/">Citable</a>${form(root, report.host)}</div>`;
 	if (report.error) {
 		return layout(
-			`${report.host}: could not check | Citable`,
-			`Citable could not read ${report.host}.`,
-			`${head}<p class="host">${esc(report.host)}</p><div class="error" style="margin-top:16px">Could not read the page: ${esc(report.error)}.</div>`,
-			self,
+			publicUrl,
+			{
+				path,
+				title: `${report.host}: could not check`,
+				description: `Citable could not read ${report.host}, so it cannot say whether ChatGPT, Claude, Perplexity and Google AI can cite it.`,
+				noindex: true,
+			},
+			`${top}<p class="host">${esc(report.host)}</p><div class="error" style="margin-top:16px">Could not read the page: ${esc(report.error)}.</div>`,
 		);
 	}
 	const fixes = report.checks.filter(
@@ -142,9 +141,14 @@ export function reportPage(report: Report, publicUrl: string): string {
 	const q = encodeURIComponent(prompt);
 	const ordered = [...report.checks].sort((a, b) => order(a) - order(b));
 	return layout(
-		`${report.host}: ${report.score}/100 for AI search | Citable`,
-		`Can ChatGPT, Claude, Perplexity and Google AI cite ${report.host}? Score ${report.score}/100, ${fixes} thing${fixes === 1 ? "" : "s"} to fix.`,
-		`${head}
+		publicUrl,
+		{
+			path,
+			title: `${report.host}: ${report.score}/100 for AI search`,
+			description: `Can ChatGPT, Claude, Perplexity and Google AI cite ${report.host}? Score ${report.score}/100, grade ${report.grade}, ${fixes} thing${fixes === 1 ? "" : "s"} to fix, each with the fix.`,
+			crumbs: [{ name: report.host, path }],
+		},
+		`${top}
 <div class="score"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="Score ${report.score} of 100"><b>${report.score}<small>grade ${report.grade}</small></b></div>
 <div><p class="host">${esc(report.host)}</p><p class="meta">${esc(report.finalUrl)}<br>${fixes === 0 ? "Nothing to fix." : `${fixes} thing${fixes === 1 ? "" : "s"} to fix.`} Checked ${esc(report.checkedAt.replace("T", " ").slice(0, 16))} UTC · <a href="?fresh=1">check again</a></p></div></div>
 ${report.partial ? `<div class="error">Partial report: the page answered ${report.partial}, so its contents were not checked.</div>` : ""}
@@ -159,7 +163,6 @@ ${
 <h2>Show the score</h2>
 <p><img src="${root}/badge/${esc(report.host)}.svg" alt="AI search score ${report.score}" height="20"></p>
 <pre>[![AI search: ${report.score}/100](${esc(base)}/badge/${esc(report.host)}.svg)](${esc(base)}/${esc(report.host)})</pre>`,
-		self,
 	);
 }
 
@@ -167,13 +170,21 @@ const order = (c: Check) => ({ fail: 0, warn: 1, pass: 2, info: 3 })[c.status];
 
 export function aboutPage(publicUrl: string): string {
 	return layout(
-		"About the checker | Citable",
-		"How Citable checks a site, and the crawler it sends.",
+		publicUrl,
+		{
+			path: "about",
+			title: "About the checker",
+			description:
+				"How Citable checks a site for AI search: what it fetches, the crawler it sends, what it stores, and answers to common questions.",
+			jsonLd: [faqJsonLd()],
+			crumbs: [{ name: "About", path: "about" }],
+		},
 		`<div class="top"><a href="${rootOf(publicUrl)}/">Citable</a></div><h1>About the checker</h1>
 <p>For each check, Citable fetches at most four addresses from the site: the page, <code>/robots.txt</code>, <code>/llms.txt</code> and the sitemap. It identifies itself as <code>CitableBot/1.0 (+${esc(publicUrl.replace(/\/$/, ""))}/about)</code>, sends only GET requests, follows at most five redirects, reads at most 2 MB, and only reaches public addresses on ports 80 and 443.</p>
-<p>A report is kept in memory for ten minutes so a shared link does not fetch the site again, then forgotten. Nothing is stored on disk; there is no database and no account.</p>
-<p>Robots rules are read as RFC 9309 says: the group that names a crawler, else the <code>*</code> group, and the longest matching rule. Citable does not pretend to be another crawler, so a firewall that blocks some user agents may treat the real ones differently.</p>`,
-		publicUrl,
+<p>A report is kept in memory for an hour so a shared link does not fetch the site again, then forgotten. Nothing is stored on disk; there is no database and no account.</p>
+<p>Robots rules are read as RFC 9309 says: the group that names a crawler, else the <code>*</code> group, and the longest matching rule. Citable does not pretend to be another crawler, so a firewall that blocks some user agents may treat the real ones differently.</p>
+<h2>Questions</h2>
+<dl>${SITE.faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join("")}</dl>`,
 	);
 }
 

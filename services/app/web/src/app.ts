@@ -1,5 +1,6 @@
 // Routes. Any path that is not one of Citable's own is a site to check: /example.com, /example.com/pricing.
 import { Hono } from "hono";
+import { ASSETS } from "./assets.generated";
 import { checkSite, type Report } from "./checks";
 import {
 	clientIp,
@@ -11,7 +12,8 @@ import {
 } from "./guard";
 import { handleMcp } from "./mcp";
 import { type Fetcher, normalizeTarget, safeFetch } from "./net";
-import { aboutPage, badge, homePage, reportPage } from "./ui";
+import { ICONS, robotsTxt, securityTxt, sitemapXml, webManifest } from "./seo";
+import { aboutPage, badge, EXAMPLES, homePage, reportPage } from "./ui";
 
 export interface AppOptions {
 	fetcher?: Fetcher;
@@ -34,7 +36,10 @@ const RESERVED = new Set([
 	"ready",
 	"robots.txt",
 	"llms.txt",
-	"favicon.ico",
+	"sitemap.xml",
+	"site.webmanifest",
+	".well-known",
+	...Object.values(ICONS),
 ]);
 
 export function createApp(options: AppOptions = {}) {
@@ -48,6 +53,8 @@ export function createApp(options: AppOptions = {}) {
 	);
 	const mcpLimit = new RateLimiter(120, 60 * 1000);
 	const slots = new Slots(options.maxChecks ?? 8);
+	/** The date sitemap.xml gives as lastmod: when this server started. */
+	const startedOn = new Date().toISOString().slice(0, 10);
 	const app = new Hono<{
 		Bindings: { requestIP?: (r: Request) => { address: string } | null };
 	}>();
@@ -129,7 +136,38 @@ export function createApp(options: AppOptions = {}) {
 	app.get("/ready", (c) => c.json({ ready: true }));
 	app.get("/", (c) => c.html(homePage(siteOf(c))));
 	app.get("/about", (c) => c.html(aboutPage(siteOf(c))));
-	app.get("/robots.txt", (c) => c.text(`User-agent: *\nAllow: /\n`));
+	app.get("/robots.txt", (c) =>
+		c.text(robotsTxt(siteOf(c).replace(/\/$/, ""))),
+	);
+	app.get("/sitemap.xml", (c) =>
+		c.body(
+			sitemapXml(
+				siteOf(c).replace(/\/$/, ""),
+				["", "about", ...EXAMPLES],
+				startedOn,
+			),
+			200,
+			{ "content-type": "application/xml; charset=utf-8" },
+		),
+	);
+	app.get("/site.webmanifest", (c) =>
+		c.body(webManifest(siteOf(c).replace(/\/$/, "")), 200, {
+			"content-type": "application/manifest+json",
+		}),
+	);
+	app.get("/.well-known/security.txt", (c) =>
+		c.text(securityTxt(siteOf(c).replace(/\/$/, ""))),
+	);
+	for (const name of Object.values(ICONS)) {
+		const asset = ASSETS[name];
+		const body = Buffer.from(asset.base64, "base64");
+		app.get(`/${name}`, (c) =>
+			c.body(body, 200, {
+				"content-type": asset.type,
+				"cache-control": "public, max-age=604800",
+			}),
+		);
+	}
 	app.get("/llms.txt", (c) => {
 		const base = siteOf(c).replace(/\/$/, "");
 		return c.text(
@@ -222,7 +260,7 @@ export function createApp(options: AppOptions = {}) {
 		const target = normalizeTarget(
 			decodeURIComponent(rest) + (query ? `?${query}` : ""),
 		);
-		if (!target) return c.html(homePage(siteOf(c)), 404);
+		if (!target) return c.html(homePage(siteOf(c), true), 404);
 		// One address per page: https://example.com/ and example.com both land on /example.com.
 		const canonicalPath = `/${target.hostname}${target.pathname === "/" ? "" : target.pathname}`;
 		if (canonicalPath !== url.pathname)
