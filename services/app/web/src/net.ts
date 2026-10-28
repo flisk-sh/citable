@@ -154,6 +154,11 @@ export interface FetchOptions {
 	maxRedirects?: number;
 	/** How host names resolve; tests pass their own. */
 	resolve?: typeof lookup;
+	/**
+	 * Fetch the address as given, with no public-address check and no pinning: for the command line, where the user
+	 * checks their own sites, local and staging ones included, and runs on Node, whose fetch has no TLS server name.
+	 */
+	direct?: boolean;
 }
 
 /** Fetches with GET, following up to `maxRedirects` redirects by hand and checking each hop. Never throws. */
@@ -166,6 +171,7 @@ export async function safeFetch(
 		maxBytes = 2_000_000,
 		maxRedirects = 5,
 		resolve = lookup,
+		direct = false,
 	} = options;
 	const started = Date.now();
 	const failed = (error: string, finalUrl = url): Fetched => ({
@@ -184,10 +190,11 @@ export async function safeFetch(
 		return failed("not a valid address");
 	}
 	const signal = AbortSignal.timeout(timeoutMs);
-	for (let hop = 0; hop <= maxRedirects; hop++) {
+	/** The request for `url` pinned to its checked public address, or why there is none. */
+	const vetAndPin = async (url: URL) => {
 		// A name server that never answers must not hold the check past its time limit.
 		const vetted = await Promise.race([
-			vet(current, resolve),
+			vet(url, resolve),
 			new Promise<undefined>((done) =>
 				signal.aborted
 					? done(undefined)
@@ -196,21 +203,22 @@ export async function safeFetch(
 						}),
 			),
 		]);
-		if (!vetted)
-			return failed(
-				`no answer within ${timeoutMs / 1000} seconds`,
-				current.href,
-			);
-		if (!("address" in vetted))
-			return failed(`refused: ${vetted.refused}`, current.href);
-		const target = pinned(current, vetted.address);
+		if (!vetted) return `no answer within ${timeoutMs / 1000} seconds`;
+		if (!("address" in vetted)) return `refused: ${vetted.refused}`;
+		return pinned(url, vetted.address);
+	};
+	for (let hop = 0; hop <= maxRedirects; hop++) {
+		const target = direct
+			? { input: current, host: undefined, serverName: undefined }
+			: await vetAndPin(current);
+		if (typeof target === "string") return failed(target, current.href);
 		let response: Response;
 		try {
 			response = await fetch(target.input, {
 				redirect: "manual",
 				signal,
 				headers: {
-					host: target.host,
+					...(target.host && { host: target.host }),
 					"user-agent": USER_AGENT,
 					accept: "text/html,text/plain,application/xml;q=0.9,*/*;q=0.5",
 				},

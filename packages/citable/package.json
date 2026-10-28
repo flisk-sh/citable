@@ -1,0 +1,50 @@
+{
+  "name": "@flisk-sh/citable",
+  "version": "0.1.0",
+  "description": "Can AI answers cite your site? A deterministic 0-100 score for ChatGPT search, Claude, Perplexity and Google AI Overviews, for your terminal and CI.",
+  "keywords": [
+    "ai-search",
+    "geo",
+    "llms.txt",
+    "robots.txt",
+    "seo",
+    "chatgpt",
+    "claude",
+    "perplexity",
+    "ci"
+  ],
+  "homepage": "https://citable.flisk.si",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flisk-sh/citable.git",
+    "directory": "packages/citable"
+  },
+  "bugs": "https://github.com/flisk-sh/citable/issues",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "citable": "dist/citable.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "bun build src/bin.ts --target=node --format=esm --external html-rewriter-wasm --outfile dist/citable.mjs",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "html-rewriter-wasm": "0.4.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^20.0.0",
+    "typescript": "^7.0.2"
+  }
+}
