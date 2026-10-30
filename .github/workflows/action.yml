@@ -1,0 +1,27 @@
+name: Action
+
+on:
+  pull_request:
+    paths:
+      - action.yml
+      - .github/workflows/action.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - id: citable
+        uses: ./
+        with:
+          urls: https://citable.flisk.si/
+          min-score: "50"
+      - name: The score is an output
+        env:
+          SCORE: ${{ steps.citable.outputs.score }}
+        run: test -n "$SCORE" && echo "score $SCORE"
