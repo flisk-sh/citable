@@ -22,9 +22,9 @@ inputs:
     required: false
     default: "0.1.0"
   timeout:
-    description: "Time limit per request in milliseconds."
+    description: "Time limit per request in milliseconds. Generous, because a sleeping free-tier host can take a while to wake."
     required: false
-    default: "8000"
+    default: "20000"
   node-version:
     description: "Node.js version used to run the CLI (20 or later)."
     required: false

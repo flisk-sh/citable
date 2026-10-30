@@ -16,9 +16,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Debug
-        continue-on-error: true
-        run: cd "$RUNNER_TEMP" && node -v && npx -y @flisk-sh/citable@0.1.0 https://citable.flisk.si/ --skip speed
       - id: citable
         uses: ./
         with:
