@@ -18,6 +18,21 @@ Citable reads the page the way ChatGPT search, Claude, Perplexity, Google AI Ove
 - **A badge.** `![AI search](https://citable.flisk.si/badge/example.com.svg)`.
 - **No signup, no database, no API key.** The URL is the state. Reports live in memory for an hour, then they are gone.
 
+## GitHub Action
+
+Gate a pull request, or a weekly check, on the score. The job summary shows the table; the job fails below `min-score`.
+
+```yaml
+- uses: flisk-sh/citable@v1
+  with:
+    urls: https://example.com/
+    min-score: 90
+```
+
+Inputs: `urls` (one per line), `min-score`, `skip` (default `speed`), `version` (the npm package, pinned), `timeout`.
+Outputs: `score` and `grade` of the lowest page, `passed`, and `report`, the JSON file. It runs the
+[CLI](packages/citable/README.md), so a local preview works too: `urls: http://localhost:4173/`.
+
 ## Run it
 
 Needs Docker, Tilt and the [Flisk CLI](https://github.com/flisk-sh/flisk).
