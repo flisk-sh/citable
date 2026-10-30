@@ -29,7 +29,7 @@ Gate a pull request, or a weekly check, on the score. The job summary shows the 
     min-score: 90
 ```
 
-Inputs: `urls` (one per line), `min-score`, `skip` (default `speed`), `version` (the npm package, pinned), `timeout` (20000 ms).
+Inputs: `urls` (one per line), `min-score`, `skip` (default `speed`), `version` (the npm package, pinned), `wait` (seconds to let a sleeping host wake up, 90), `timeout`.
 Outputs: `score` and `grade` of the lowest page, `passed`, and `report`, the JSON file. It runs the
 [CLI](packages/citable/README.md), so a local preview works too: `urls: http://localhost:4173/`.
 

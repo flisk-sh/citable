@@ -21,10 +21,14 @@ inputs:
     description: "Version of the @flisk-sh/citable npm package to run. Pin it: a new release may reweigh a check."
     required: false
     default: "0.1.0"
-  timeout:
-    description: "Time limit per request in milliseconds. Generous, because a sleeping free-tier host can take a while to wake."
+  wait:
+    description: "Seconds to wait for a page to answer before scoring it, so a free-tier host that sleeps can wake up. 0 turns it off."
     required: false
-    default: "20000"
+    default: "90"
+  timeout:
+    description: "Time limit per request in milliseconds."
+    required: false
+    default: "8000"
   node-version:
     description: "Node.js version used to run the CLI (20 or later)."
     required: false
@@ -59,6 +63,7 @@ runs:
         CITABLE_SKIP: ${{ inputs.skip }}
         CITABLE_VERSION: ${{ inputs.version }}
         CITABLE_TIMEOUT: ${{ inputs.timeout }}
+        CITABLE_WAIT: ${{ inputs.wait }}
       run: |
         set -u +e
         # Not in the workspace: inside a checkout that holds this package, npx would look for a local link.
@@ -67,6 +72,17 @@ runs:
         if [ "${#urls[@]}" -eq 0 ]; then
           echo "::error::The urls input is empty."
           exit 2
+        fi
+        # Wake a sleeping host first: poll each page until it answers (any HTTP status) or the wait runs out.
+        if [ "${CITABLE_WAIT:-0}" -gt 0 ]; then
+          for u in "${urls[@]}"; do
+            case "$u" in http://*|https://*) ;; *) u="https://$u" ;; esac
+            end=$((SECONDS + CITABLE_WAIT))
+            until curl -s -o /dev/null --max-time 15 "$u"; do
+              [ "$SECONDS" -ge "$end" ] && { echo "::warning::$u did not answer within ${CITABLE_WAIT}s."; break; }
+              sleep 3
+            done
+          done
         fi
         common=(--timeout "$CITABLE_TIMEOUT")
         [ -n "$CITABLE_SKIP" ] && common+=(--skip "$CITABLE_SKIP")
