@@ -1,0 +1,119 @@
+name: "Citable: AI search score"
+description: "Score pages out of 100 on whether ChatGPT search, Claude, Perplexity and Google AI Overviews can cite them. Fails the build below a minimum score."
+author: "flisk-sh"
+branding:
+  icon: "search"
+  color: "blue"
+
+inputs:
+  urls:
+    description: "Pages to check, one per line or separated by spaces. Full addresses such as http://localhost:4173/ work for previews."
+    required: true
+  min-score:
+    description: "Fail the job when any page scores below this (0-100). Empty means report only."
+    required: false
+    default: ""
+  skip:
+    description: "Checks to leave out, comma-separated. Response time varies between runs, so it is skipped by default; pass an empty string to score it."
+    required: false
+    default: "speed"
+  version:
+    description: "Version of the @flisk-sh/citable npm package to run. Pin it: a new release may reweigh a check."
+    required: false
+    default: "0.1.0"
+  wait:
+    description: "Seconds to wait for a page to answer before scoring it, so a free-tier host that sleeps can wake up. 0 turns it off."
+    required: false
+    default: "90"
+  timeout:
+    description: "Time limit per request in milliseconds."
+    required: false
+    default: "8000"
+  node-version:
+    description: "Node.js version used to run the CLI (20 or later)."
+    required: false
+    default: "22"
+
+outputs:
+  score:
+    description: "The lowest score among the checked pages (0-100)."
+    value: ${{ steps.run.outputs.score }}
+  grade:
+    description: "The grade of the lowest-scoring page."
+    value: ${{ steps.run.outputs.grade }}
+  passed:
+    description: "true when every page met min-score (always true without one)."
+    value: ${{ steps.run.outputs.passed }}
+  report:
+    description: "Path to the JSON report on the runner."
+    value: ${{ steps.run.outputs.report }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - id: run
+      shell: bash
+      env:
+        CITABLE_URLS: ${{ inputs.urls }}
+        CITABLE_MIN_SCORE: ${{ inputs.min-score }}
+        CITABLE_SKIP: ${{ inputs.skip }}
+        CITABLE_VERSION: ${{ inputs.version }}
+        CITABLE_TIMEOUT: ${{ inputs.timeout }}
+        CITABLE_WAIT: ${{ inputs.wait }}
+      run: |
+        set -u +e
+        # Not in the workspace: inside a checkout that holds this package, npx would look for a local link.
+        cd "$RUNNER_TEMP"
+        read -r -a urls <<< "$(echo "$CITABLE_URLS" | tr '\n' ' ')"
+        if [ "${#urls[@]}" -eq 0 ]; then
+          echo "::error::The urls input is empty."
+          exit 2
+        fi
+        # Wake a sleeping host first: poll each page until it answers (any HTTP status) or the wait runs out.
+        if [ "${CITABLE_WAIT:-0}" -gt 0 ]; then
+          for u in "${urls[@]}"; do
+            case "$u" in http://*|https://*) ;; *) u="https://$u" ;; esac
+            end=$((SECONDS + CITABLE_WAIT))
+            until curl -s -o /dev/null --max-time 15 "$u"; do
+              [ "$SECONDS" -ge "$end" ] && { echo "::warning::$u did not answer within ${CITABLE_WAIT}s."; break; }
+              sleep 3
+            done
+          done
+        fi
+        common=(--timeout "$CITABLE_TIMEOUT")
+        [ -n "$CITABLE_SKIP" ] && common+=(--skip "$CITABLE_SKIP")
+        cli=(npx -y "@flisk-sh/citable@${CITABLE_VERSION}")
+
+        # The score shows on the job summary whether or not the gate passes.
+        "${cli[@]}" "${urls[@]}" "${common[@]}" --markdown >> "$GITHUB_STEP_SUMMARY"
+
+        report="${RUNNER_TEMP}/citable-report.json"
+        gate=()
+        [ -n "$CITABLE_MIN_SCORE" ] && gate=(--min-score "$CITABLE_MIN_SCORE")
+        "${cli[@]}" "${urls[@]}" "${common[@]}" ${gate[@]+"${gate[@]}"} --json > "$report"
+        code=$?
+
+        REPORT="$report" CODE="$code" node -e '
+          const fs = require("fs");
+          const r = JSON.parse(fs.readFileSync(process.env.REPORT, "utf8"));
+          const all = Array.isArray(r) ? r : [r];
+          const scored = all.filter((p) => typeof p.score === "number");
+          const low = scored.length ? scored.reduce((a, b) => (b.score < a.score ? b : a)) : {};
+          const out = [
+            `score=${low.score ?? ""}`,
+            `grade=${low.grade ?? ""}`,
+            `passed=${process.env.CODE === "0"}`,
+            `report=${process.env.REPORT}`,
+          ];
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, out.join("\n") + "\n");
+          for (const p of all)
+            if (p.error) console.log(`::error::${p.url}: could not read the page: ${p.error}`);
+            else console.log(`${p.finalUrl}: ${p.score}/100 (grade ${p.grade})`);
+          if (process.env.CODE === "1")
+            console.log(`::error::Below the minimum score of ${process.env.CITABLE_MIN_SCORE}: ${low.finalUrl} scored ${low.score}.`);
+        '
+        exit "$code"
