@@ -60,7 +60,9 @@ runs:
         CITABLE_VERSION: ${{ inputs.version }}
         CITABLE_TIMEOUT: ${{ inputs.timeout }}
       run: |
-        set -uo pipefail
+        set -u +e
+        # Not in the workspace: inside a checkout that holds this package, npx would look for a local link.
+        cd "$RUNNER_TEMP"
         read -r -a urls <<< "$(echo "$CITABLE_URLS" | tr '\n' ' ')"
         if [ "${#urls[@]}" -eq 0 ]; then
           echo "::error::The urls input is empty."
