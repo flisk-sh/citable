@@ -14,7 +14,7 @@ interface JsonRpcRequest {
 
 export const CHECK_SITE_TOOL = {
 	name: "check_site",
-	title: "Check a site for AI search",
+	title: "Get a site found by AI",
 	description:
 		"Checks whether AI answer engines (ChatGPT search, Claude, Perplexity, Google AI Overviews, Copilot) can crawl, read and cite a web page: robots.txt per crawler, noindex/nosnippet, text readable without JavaScript, title, headings, schema.org, canonical, sitemap, llms.txt, response time. Returns a 0-100 score and a fix for each problem.",
 	inputSchema: {
@@ -28,7 +28,7 @@ export const CHECK_SITE_TOOL = {
 		},
 		required: ["url"],
 	},
-	annotations: { title: "Check a site for AI search", readOnlyHint: true, openWorldHint: true },
+	annotations: { title: "Get a site found by AI", readOnlyHint: true, openWorldHint: true },
 };
 
 export function summarize(report: Report): string {
