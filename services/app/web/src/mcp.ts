@@ -28,7 +28,11 @@ export const CHECK_SITE_TOOL = {
 		},
 		required: ["url"],
 	},
-	annotations: { title: "Get a site found by AI", readOnlyHint: true, openWorldHint: true },
+	annotations: {
+		title: "Get a site found by AI",
+		readOnlyHint: true,
+		openWorldHint: true,
+	},
 };
 
 export function summarize(report: Report): string {
