@@ -200,7 +200,7 @@ describe("MCP", () => {
 		};
 		expect(list.result.tools.map((t) => t.name)).toEqual(["check_site"]);
 		expect(list.result.tools[0].annotations.title).toBe(
-			"Check a site for AI search",
+			"Get a site found by AI",
 		);
 		const call = (await (
 			await rpc(app, {
