@@ -89,6 +89,24 @@ describe("pages", () => {
 		expect(html).toContain("Fix first · 1");
 	});
 
+	it("offers share links for the score on each network", async () => {
+		const html = await (await make([]).request("/acme.example")).text();
+		expect(html).toContain("Share this score");
+		for (const host of [
+			"https://x.com/intent/post?text=",
+			"https://bsky.app/intent/compose?text=",
+			"https://www.threads.net/intent/post?text=",
+			"https://www.linkedin.com/sharing/share-offsite/?url=",
+			"https://www.facebook.com/sharer/sharer.php?u=",
+			"https://www.reddit.com/submit?url=",
+			"https://news.ycombinator.com/submitlink?u=",
+			"mailto:?subject=",
+		]) {
+			expect(html).toContain(host);
+		}
+		expect(html).toContain(encodeURIComponent("acme.example scores 100/100"));
+	});
+
 	it("escapes what the site sends", async () => {
 		const site = goodSite();
 		site["https://acme.example/"] = {
@@ -269,15 +287,33 @@ describe("guards", () => {
 
 describe("prompts", () => {
 	it("lists check_my_site and fills it with the URL", async () => {
-		const list = await (await rpc(make(), { jsonrpc: "2.0", id: 1, method: "prompts/list" })).json();
-		expect(list.result.prompts.map((p: { name: string }) => p.name)).toEqual(["check_my_site"]);
-		const got = await (await rpc(make(), { jsonrpc: "2.0", id: 2, method: "prompts/get", params: { name: "check_my_site", arguments: { url: "example.com" } } })).json();
+		const list = await (
+			await rpc(make(), { jsonrpc: "2.0", id: 1, method: "prompts/list" })
+		).json();
+		expect(list.result.prompts.map((p: { name: string }) => p.name)).toEqual([
+			"check_my_site",
+		]);
+		const got = await (
+			await rpc(make(), {
+				jsonrpc: "2.0",
+				id: 2,
+				method: "prompts/get",
+				params: { name: "check_my_site", arguments: { url: "example.com" } },
+			})
+		).json();
 		expect(got.result.messages[0].content.text).toContain("example.com");
 		expect(got.result.messages[0].content.text).toContain("check_site");
 	});
 
 	it("refuses a prompt without its URL", async () => {
-		const got = await (await rpc(make(), { jsonrpc: "2.0", id: 3, method: "prompts/get", params: { name: "check_my_site", arguments: {} } })).json();
+		const got = await (
+			await rpc(make(), {
+				jsonrpc: "2.0",
+				id: 3,
+				method: "prompts/get",
+				params: { name: "check_my_site", arguments: {} },
+			})
+		).json();
 		expect(got.error.code).toBe(-32602);
 	});
 });
