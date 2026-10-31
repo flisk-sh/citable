@@ -35,6 +35,34 @@ export const CHECK_SITE_TOOL = {
 	},
 };
 
+const PROMPTS = [
+	{
+		name: "check_my_site",
+		title: "Check my site for AI search",
+		description: "Check whether AI search can find, read and cite a website, and say what to fix first.",
+		arguments: [{ name: "url", description: "The site address, for example example.com", required: true }],
+	},
+] as const;
+
+function getPrompt(name: string, args: Record<string, unknown> | undefined) {
+	if (name !== "check_my_site") return null;
+	const url = typeof args?.url === "string" ? args.url.trim() : "";
+	if (!url) return null;
+	return {
+		description: "Check a site for AI search.",
+		messages: [
+			{
+				role: "user",
+				content: {
+					type: "text",
+					text: `Check ${url} with check_site. Say whether AI answer engines can find, read and cite it, then list the fixes in order of importance.`,
+				},
+			},
+		],
+	};
+}
+
+
 export function summarize(report: Report): string {
 	if (report.error) return `Could not read ${report.url}: ${report.error}.`;
 	const lines = [
@@ -95,7 +123,7 @@ async function handleOne(
 				protocolVersion: PROTOCOL_VERSIONS.includes(asked)
 					? asked
 					: PROTOCOL_VERSIONS[0],
-				capabilities: { tools: {} },
+				capabilities: { tools: {}, prompts: {} },
 				serverInfo: { name: "citable", version: "1.0.0" },
 				instructions:
 					"Use check_site when someone asks whether AI search or chatbots can find, read or cite a website.",
@@ -105,6 +133,24 @@ async function handleOne(
 			return ok({});
 		case "tools/list":
 			return ok({ tools: [CHECK_SITE_TOOL] });
+		case "prompts/list":
+			return ok({ prompts: PROMPTS });
+		case "prompts/get": {
+			const prompt = getPrompt(
+				String(params?.name ?? ""),
+				params?.arguments as Record<string, unknown> | undefined,
+			);
+			if (!prompt)
+				return {
+					jsonrpc: "2.0",
+					id,
+					error: {
+						code: -32602,
+						message: `Unknown prompt or missing argument: ${String(params?.name)}`,
+					},
+				};
+			return ok(prompt);
+		}
 		case "tools/call": {
 			if (params?.name !== CHECK_SITE_TOOL.name) {
 				return {
