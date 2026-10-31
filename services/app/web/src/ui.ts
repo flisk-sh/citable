@@ -82,7 +82,7 @@ details{margin-top:10px;font-size:14px;color:var(--muted)}summary{cursor:pointer
 details ul{margin:8px 0 0;padding:10px 14px 10px 30px;background:var(--sunk);border-radius:10px;font:13px/1.7 var(--mono);word-break:break-word}
 .cta{margin-top:44px;border-radius:20px;padding:28px;background:var(--fg);color:var(--bg)}.cta h3{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}.cta p{margin:0 0 18px;opacity:.75}
 .cta .row{display:flex;gap:10px;flex-wrap:wrap}.cta .btn{display:inline-block;padding:11px 18px;border-radius:10px;font-weight:650;text-decoration:none;background:var(--bg);color:var(--fg)}.cta .btn:hover{background:var(--accent);color:var(--accent-fg)}
-.share{margin-top:36px}.share h3{margin:0 0 12px;font-size:18px}.share ul{list-style:none;margin:0;padding:0;display:flex;gap:8px;flex-wrap:wrap}.share a{display:inline-block;padding:8px 14px;border:1px solid var(--line,#ddd);border-radius:999px;color:inherit;text-decoration:none;font-size:14px}.share a:hover{border-color:var(--fg);text-decoration:underline}
+.share{margin-top:44px;padding:24px;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow)}.share h3{margin:0 0 4px;font-size:18px;letter-spacing:-.01em}.share>p{margin:0 0 18px;color:var(--muted);font-size:14px}.share ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}.share a{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);text-decoration:none;font-weight:600;font-size:15px}.share a:hover{border-color:var(--fg);background:var(--sunk)}.share a i{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font:700 13px/1 var(--mono);font-style:normal;color:#fff}.share a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .cta details{color:inherit;opacity:.85}.cta pre{background:color-mix(in srgb,var(--bg) 10%,transparent);border-radius:10px;padding:12px;font:12px/1.6 var(--mono);white-space:pre-wrap;word-break:break-word;margin:8px 0 0}
 .badge{margin-top:44px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}.badge h3{margin:0 0 12px;font-size:17px}.badge pre{margin:12px 0 0;background:var(--sunk);border-radius:10px;padding:12px;font:12px/1.6 var(--mono);white-space:pre-wrap;word-break:break-all}
 .error{margin-top:28px;border:1px solid color-mix(in srgb,var(--fail) 40%,var(--line));background:color-mix(in srgb,var(--fail) 7%,var(--surface));color:var(--fg);border-radius:14px;padding:16px 18px}
@@ -353,6 +353,18 @@ export function fixPrompt(report: Report): string {
 	].join("\n");
 }
 
+/** Each network's monogram and brand color, shown on its share tile. */
+const SHARE_BRAND: Record<string, [string, string]> = {
+	X: ["X", "#141413"],
+	Bluesky: ["B", "#1185fe"],
+	Threads: ["@", "#141413"],
+	LinkedIn: ["in", "#0a66c2"],
+	Facebook: ["f", "#1877f2"],
+	Reddit: ["r/", "#ff4500"],
+	"Hacker News": ["Y", "#ff6600"],
+	Email: ["@", "#66635c"],
+};
+
 /** Share links for a report: plain URLs, so they work without JavaScript. */
 export function shareLinks(
 	report: Pick<Report, "host" | "score">,
@@ -478,13 +490,13 @@ ${
 }
 ${ledger("Passing", passing)}
 ${ledger("Notes", notes)}
-<div class="share"><h3>Share this score</h3><ul>${shareLinks(
+<div class="share"><h3>Share this score</h3><p>Opens the network in a new tab with the link. Citable receives nothing.</p><ul>${shareLinks(
 			report,
 			`${base}/${path}`,
 		)
 			.map(
 				(l) =>
-					`<li><a href="${esc(l.href)}" rel="noopener" target="_blank">${esc(l.name)}</a></li>`,
+					`<li><a href="${esc(l.href)}" rel="noopener" target="_blank"><i style="background:${SHARE_BRAND[l.name][1]}" aria-hidden="true">${SHARE_BRAND[l.name][0]}</i>${esc(l.name)}</a></li>`,
 			)
 			.join("")}</ul></div>
 <div class="badge"><h3>Show the score</h3><p>Click the code to select it</p><img src="${root}/badge/${esc(report.host)}.svg" alt="AI search score ${report.score}" height="20">
