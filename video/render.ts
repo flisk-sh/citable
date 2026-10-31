@@ -13,8 +13,12 @@ import { launch } from "./cdp";
 
 const dir = import.meta.dir;
 const root = join(dir, "..");
-const config = JSON.parse(readFileSync(join(dir, "film.json"), "utf8"));
-mkdirSync(join(dir, "out"), { recursive: true });
+const filmFile = process.env.FILM || "film.json";
+// A second film (FILM=ph/film.json) writes to its own folder and leaves the site's embedded video and the README GIF alone.
+const standalone = filmFile !== "film.json";
+const config = JSON.parse(readFileSync(join(dir, filmFile), "utf8"));
+const outDir = standalone ? join(dir, "out", filmFile.replace(/\/?film\.json$|\.json$/, "") || "film") : join(dir, "out");
+mkdirSync(outDir, { recursive: true });
 
 // "@shot.name" → that element's box [x, y, w, h] from shots/<shot>.json; "@shot.name:c" → its centre [x, y];
 // "@shot.name:y" → its top, less 120 px, for scrolling to it; "@shot.name:w1.6" → a camera keyframe on it, and
@@ -66,13 +70,13 @@ try {
 	if (mode === "stills") {
 		for (const t of rest.map(Number)) {
 			await at(t);
-			await Bun.write(join(dir, "out", `still-${t}.png`), await b.png());
+			await Bun.write(join(outDir, `still-${t}.png`), await b.png());
 			console.log("still", t);
 		}
 	} else {
 		const fps = Number(config.fps ?? 30);
 		const n = Math.ceil(film.duration * fps);
-		const frames = join(dir, "out", "frames.mp4");
+		const frames = join(outDir, "frames.mp4");
 		const ff = Bun.spawn(
 			["ffmpeg", "-loglevel", "error", "-y", "-f", "image2pipe", "-framerate", String(fps), "-c:v", "mjpeg", "-i", "-",
 				"-c:v", "libx264", "-preset", "medium", "-crf", "16", "-pix_fmt", "yuv420p", frames],
@@ -95,17 +99,19 @@ try {
 		const { mix } = soundtrack(
 			film.scenes.map((s: { start: number }, i: number) => ({ ...config.scenes[i], start: s.start })),
 			film.duration,
-			join(dir, "out"),
+			outDir,
 		);
-		const master = join(dir, "out", "film.mp4");
+		const master = join(outDir, "film.mp4");
 		run(["-i", frames, "-i", mix, "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
 			"-ar", "48000", "-shortest", "-movflags", "+faststart", master]);
 		// For the page: 1280×720, small enough to embed. It autoplays muted; its controls turn the voice on.
-		const mp4 = join(dir, "out", "demo.mp4");
+		const mp4 = join(outDir, "demo.mp4");
 		run(["-i", master, "-vf", "scale=1280:-2:flags=lanczos", "-c:v", "libx264", "-preset", "slow", "-crf", "27",
 			"-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", mp4]);
-		const poster = join(dir, "out", "demo.jpg");
+		const poster = join(outDir, "demo.jpg");
 		run(["-ss", String(config.posterAt ?? 6), "-i", master, "-frames:v", "1", "-vf", "scale=1280:-2", "-q:v", "4", poster]);
+		if (standalone) console.log(`${film.duration.toFixed(1)} s: ${master}`);
+		else {
 		// For the README: a GIF, which GitHub plays inline.
 		mkdirSync(join(root, "docs"), { recursive: true });
 		run(["-i", master, "-vf",
@@ -124,6 +130,7 @@ try {
 		);
 		const kb = (f: string) => Math.round(readFileSync(f).length / 1024);
 		console.log(`${film.duration.toFixed(1)} s in ${((Date.now() - t0) / 1000).toFixed(0)} s: demo.mp4 ${kb(mp4)} KB, docs/demo.gif ${kb(join(root, "docs", "demo.gif"))} KB → ${config.module}`);
+		}
 	}
 } finally {
 	b.close();
