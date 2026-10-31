@@ -63,6 +63,27 @@
   #card .pill { margin-top: 34px; display: inline-block; font-family: var(--mono); font-size: 34px; color: #fff; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); padding: 16px 32px; border-radius: 14px; }
   #card .pill b { color: var(--accent); font-weight: 600; }
 
+
+  #stills { position: absolute; inset: 0; overflow: hidden; } #stills img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; opacity: 0; }
+  #panel { position: absolute; inset: 0; display: none; place-items: center; }
+  #panel .box { position: relative; width: 1500px; border-radius: 18px; overflow: hidden; background: #0b0f0d; color: #e7ece9;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 40px 120px -20px rgba(0,0,0,.9), 0 0 90px -10px rgba(34,197,94,.25); }
+  #panel .bar { height: 56px; background: #171c19; display: flex; align-items: center; gap: 9px; padding: 0 20px; color: #8b968f; font: 600 20px var(--sans); }
+  #panel .bar i { width: 14px; height: 14px; border-radius: 50%; display: block; } #panel .bar i:nth-child(1){background:#ff5f57} #panel .bar i:nth-child(2){background:#febc2e} #panel .bar i:nth-child(3){background:#28c840}
+  #panel .bar span { margin-left: 14px; }
+  #panel .body { padding: 36px 44px 40px; font: 500 34px/1.5 var(--mono); white-space: pre-wrap; }
+  #panel .dim { color: #6f7b74; } #panel .g { color: #4ade80; } #panel .r { color: #f87171; } #panel .y { color: #fbbf24; } #panel .c { color: #67e8f9; } #panel .p { color: #c4b5fd; } #panel .w { color: #fff; }
+  #panel .big { font: 800 150px/1 var(--sans); letter-spacing: -0.05em; }
+  #panel .row { display: flex; align-items: center; gap: 28px; padding: 20px 24px; border-radius: 14px; background: rgba(255,255,255,.05); margin-top: 16px; font: 600 34px var(--sans); }
+  #panel .row .ico { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; font-weight: 800; color: #04120a; }
+  #panel .row .ico.ok { background: #4ade80; } #panel .row .ico.no { background: #f87171; }
+  #panel .row small { display: block; font: 500 24px var(--mono); color: #8b968f; margin-top: 4px; }
+  #panel .mp { padding: 44px; font-family: var(--sans); }
+  #panel .mp h2 { font-size: 64px; letter-spacing: -0.03em; } #panel .mp p { font-size: 30px; color: #a1a1aa; margin-top: 12px; }
+  #panel .btn { display: inline-block; margin-top: 30px; padding: 18px 36px; border-radius: 12px; background: #238636; color: #fff; font: 700 32px var(--sans); }
+  #panel .art { width: 1700px; height: 900px; position: relative; } #panel .art svg { width: 100%; height: 100%; display: block; border-radius: 24px; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 40px 120px -20px rgba(0,0,0,.9); }
+  #panel .crowd { font-size: 64px; letter-spacing: 2px; line-height: 1.2; }
+
   #cap { position: absolute; left: 72px; bottom: 64px; background: rgba(10,12,14,.72); color: #fff; font-size: 38px; font-weight: 600;
     padding: 16px 30px 17px 58px; letter-spacing: -0.01em; opacity: 0; white-space: nowrap; border-radius: 16px;
     border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
@@ -89,6 +110,8 @@
     <div id="ripple"></div>
   </div>
   <div id="vignette"></div>
+  <div id="stills"></div>
+  <div id="panel"></div>
   <div id="card"></div>
   <div id="cap"></div>
   <div id="fade"></div>
@@ -125,6 +148,8 @@ $("favicon").src = CONFIG.icon;
 document.documentElement.style.setProperty("--accent", CONFIG.accent || "#4ade80");
 // Page images, one <img> each, shown by opacity.
 const images = new Map();
+const stillImgs = new Map();
+for (const s of scenes) if (s.kind === "still" && !stillImgs.has(s.src)) { const i = document.createElement("img"); i.src = s.src; $("stills").appendChild(i); stillImgs.set(s.src, i); }
 for (const s of scenes) for (const [, src] of s.imgs || []) if (!images.has(src)) {
   const img = document.createElement("img"); img.src = src; img.style.opacity = 0; $("page").appendChild(img); images.set(src, img);
 }
@@ -148,7 +173,7 @@ function omni(o, lt) {
 
 function card(c) {
   return `<div><div class="logo"><img src="${c.icon || CONFIG.icon}" alt=""><span class="word">${esc(c.name || CONFIG.name)}</span></div>
-${c.title ? `<div class="t">${c.title.map(esc).join("<br>")}</div>` : ""}${c.sub ? `<div class="sub">${esc(c.sub)}</div>` : ""}${c.pill ? `<div class="pill">${c.pill}</div>` : ""}</div>`;
+${c.title ? `<div class="t">${c.title.map(esc).join("<br>")}</div>` : ""}${c.crowd ? `<div class="sub" style="font-size:78px;letter-spacing:6px;margin-top:20px">${c.crowd}</div>` : ""}${c.sub ? `<div class="sub">${esc(c.sub)}</div>` : ""}${c.pill ? `<div class="pill">${c.pill}</div>` : ""}</div>`;
 }
 
 window.seek = function (t) {
@@ -160,6 +185,36 @@ window.seek = function (t) {
   const fin = s.fadeIn ? 1 - clamp(lt / FADE) : 0, fout = s.fadeOut ? clamp((lt - (s.dur - FADE)) / FADE) : 0;
   $("fade").style.opacity = Math.max(fin, fout);
 
+
+  for (const i of stillImgs.values()) i.style.opacity = 0;
+  if (s.kind === "still") {
+    $("panel").style.display = "none"; $("card").style.opacity = 0; $("cam").style.opacity = 0; $("stills").style.display = "block";
+    const [cx, cy, sc] = kf(lt, s.cam, [960, 540, 1]);
+    const i = stillImgs.get(s.src); i.style.opacity = 1; i.style.transform = `translate(${960 - cx * sc}px, ${540 - cy * sc}px) scale(${sc})`;
+  } else $("stills").style.display = "none";
+  if (s.kind === "panel") {
+    $("panel").style.display = "grid";
+    if ($("panel").dataset.src !== String(s.start)) { $("panel").innerHTML = s.html; $("panel").dataset.src = String(s.start); }
+    $("card").style.opacity = 0; $("cam").style.opacity = 0;
+    const box = $("panel").firstElementChild;
+    box.style.transform = `scale(${lerp(0.96, 1, ease(lt / 0.7))})`; box.style.opacity = ease(lt / 0.45);
+    for (const e of $("panel").querySelectorAll("[data-at]")) {
+      const at = Number(e.dataset.at), x = clamp((lt - at) / 0.35);
+      e.style.opacity = x; e.style.transform = `translateY(${(1 - x) * 14}px)`;
+    }
+    for (const e of $("panel").querySelectorAll("[data-type]")) {
+      const at = Number(e.dataset.from), cps = Number(e.dataset.cps || 28), n = Math.max(0, Math.floor((lt - at) * cps));
+      const full = e.dataset.type; e.textContent = full.slice(0, n) + (n < full.length && lt >= at ? "\u258c" : "");
+    }
+    for (const e of $("panel").querySelectorAll("[data-flick]")) {
+      const p = Number(e.dataset.flick); e.style.transformOrigin = "50% 100%"; e.style.transformBox = "fill-box";
+      e.style.transform = `scale(${1 + 0.04 * Math.sin(lt * 9 + p)}, ${1 + 0.09 * Math.sin(lt * 7.3 + p * 2)})`;
+    }
+    for (const e of $("panel").querySelectorAll("[data-num]")) {
+      const at = Number(e.dataset.from), d = Number(e.dataset.dur || 1.2);
+      e.textContent = Math.round(Number(e.dataset.num) * ease((lt - at) / d));
+    }
+  } else if (s.kind !== "still") { $("panel").style.display = "none"; $("cam").style.opacity = 1; }
   if (s.kind === "card") {
     $("card").style.opacity = 1;
     $("card").innerHTML = card(s);

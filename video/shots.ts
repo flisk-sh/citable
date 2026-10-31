@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { launch } from "./cdp";
 
 const dir = import.meta.dir;
-const config = JSON.parse(readFileSync(join(dir, "film.json"), "utf8"));
+const config = JSON.parse(readFileSync(join(dir, process.env.FILM || "film.json"), "utf8"));
 const only = process.argv.slice(2);
 mkdirSync(join(dir, "shots"), { recursive: true });
 

@@ -52,7 +52,7 @@ function speak(text: string, path: string) {
 	const mp3 = path.replace(/\.wav$/, ".mp3");
 	for (let attempt = 1; ; attempt++) {
 		const r = Bun.spawnSync(["edge-tts", "--voice", process.env.VOICE || "en-US-AvaMultilingualNeural",
-			`--rate=${process.env.RATE || "+0%"}`, "--text", text, "--write-media", mp3]);
+			`--rate=${process.env.RATE || "+0%"}`, `--pitch=${process.env.PITCH || "+0Hz"}`, "--text", text, "--write-media", mp3]);
 		if (r.exitCode === 0 && Bun.spawnSync(["ffprobe", "-v", "error", mp3]).exitCode === 0) break;
 		if (attempt === 5) throw new Error(`edge-tts failed for "${text}": ${r.stderr.toString()}`);
 		Bun.sleepSync(2000);

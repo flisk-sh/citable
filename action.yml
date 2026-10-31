@@ -1,5 +1,5 @@
 name: "Citable: AI search score"
-description: "Score pages out of 100 on whether ChatGPT search, Claude, Perplexity and Google AI Overviews can cite them. Fails the build below a minimum score."
+description: "Score pages out of 100 on whether AI search (ChatGPT, Claude, Perplexity, Google) can cite them. Fail CI below a minimum."
 author: "flisk-sh"
 branding:
   icon: "search"
