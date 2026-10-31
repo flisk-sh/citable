@@ -1,0 +1,25 @@
+{
+  "name": "ai-search-checker",
+  "displayName": "AI Search Checker",
+  "version": "1.0.0",
+  "description": "Check if ChatGPT, Claude and Perplexity can find and quote your website. Gives a score out of 100 and a fix for each problem. Free, no account.",
+  "author": {
+    "name": "Flisk",
+    "url": "https://flisk.sh"
+  },
+  "homepage": "https://citable.flisk.si",
+  "repository": "https://github.com/flisk-sh/citable",
+  "license": "MIT",
+  "keywords": [
+    "seo",
+    "ai-search",
+    "chatgpt",
+    "perplexity",
+    "llms-txt",
+    "mcp"
+  ],
+  "icon": "./.claude-plugin/icon.png",
+  "documentationUrl": "https://github.com/flisk-sh/citable#readme",
+  "supportUrl": "https://github.com/flisk-sh/citable/issues",
+  "privacyPolicyUrl": "https://citable.flisk.si/about"
+}
