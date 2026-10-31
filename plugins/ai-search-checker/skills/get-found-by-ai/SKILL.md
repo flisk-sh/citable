@@ -1,9 +1,9 @@
 ---
-name: check-ai-search
-description: Check whether AI answer engines can find, read and quote a website. Use when the user asks if their site shows up in ChatGPT, Claude, Perplexity or Google AI, or wants SEO for AI search.
+name: get-found-by-ai
+description: Get a website found and quoted by AI. Checks whether ChatGPT, Claude, Perplexity and Google AI can find, read and quote it. Use when the user says get my site found by AI, AI SEO, SEO for ChatGPT, show up in ChatGPT or Perplexity, is my site in AI search, or GEO.
 ---
 
-# Check a site for AI search
+# Get a site found by AI
 
 Use the `check_site` tool from the `ai-search-checker` server.
 

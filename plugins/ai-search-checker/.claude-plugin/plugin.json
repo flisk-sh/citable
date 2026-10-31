@@ -1,8 +1,8 @@
 {
   "name": "ai-search-checker",
-  "displayName": "AI Search Checker",
+  "displayName": "Get My Site Found by AI",
   "version": "1.0.0",
-  "description": "Check if ChatGPT, Claude and Perplexity can find and quote your website. Gives a score out of 100 and a fix for each problem. Free, no account.",
+  "description": "Get your website found and quoted by ChatGPT, Claude and Perplexity. A score out of 100 and a fix for each problem. Free, no account.",
   "author": {
     "name": "Flisk",
     "url": "https://flisk.sh"
@@ -11,11 +11,14 @@
   "repository": "https://github.com/flisk-sh/citable",
   "license": "MIT",
   "keywords": [
-    "seo",
-    "ai-search",
-    "chatgpt",
+    "ai seo",
+    "get found by ai",
+    "chatgpt seo",
+    "ai search",
+    "generative engine optimization",
     "perplexity",
     "llms-txt",
+    "seo",
     "mcp"
   ],
   "icon": "./.claude-plugin/icon.png",
