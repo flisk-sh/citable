@@ -195,8 +195,13 @@ describe("MCP", () => {
 		).toBe(202);
 		const list = (await (
 			await rpc(app, { jsonrpc: "2.0", id: 2, method: "tools/list" })
-		).json()) as { result: { tools: { name: string }[] } };
+		).json()) as {
+			result: { tools: { name: string; annotations: { title: string } }[] };
+		};
 		expect(list.result.tools.map((t) => t.name)).toEqual(["check_site"]);
+		expect(list.result.tools[0].annotations.title).toBe(
+			"Check a site for AI search",
+		);
 		const call = (await (
 			await rpc(app, {
 				jsonrpc: "2.0",
