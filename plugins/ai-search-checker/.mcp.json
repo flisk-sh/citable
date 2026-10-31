@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ai-search-checker": {
+      "type": "http",
+      "url": "https://citable.flisk.si/mcp"
+    }
+  }
+}
