@@ -1,0 +1,15 @@
+{
+  "name": "flisk-citable",
+  "description": "Flisk's AI Search Checker: get your website found and quoted by ChatGPT, Claude and Perplexity.",
+  "owner": {
+    "name": "Flisk",
+    "url": "https://flisk.sh"
+  },
+  "plugins": [
+    {
+      "name": "ai-search-checker",
+      "source": "./plugins/ai-search-checker",
+      "description": "Get your website found and quoted by ChatGPT, Claude and Perplexity. A score out of 100 and a fix for each problem. Free, no account."
+    }
+  ]
+}
