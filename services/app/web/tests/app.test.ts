@@ -232,6 +232,27 @@ describe("MCP", () => {
 		expect(call.result.content[0].text).toContain("100/100");
 	});
 
+	it("answers a site it could not read as a result, not a tool error", async () => {
+		const app = createApp({
+			fetcher: fakeFetcher({
+				"https://down.example/": { status: 0, error: "refused: no answer" },
+			}),
+			publicUrl: "https://citable.test/",
+		});
+		const call = (await (
+			await rpc(app, {
+				jsonrpc: "2.0",
+				id: 6,
+				method: "tools/call",
+				params: { name: "check_site", arguments: { url: "down.example" } },
+			})
+		).json()) as {
+			result: { isError: boolean; structuredContent: { error?: string } };
+		};
+		expect(call.result.structuredContent.error).toBeTruthy();
+		expect(call.result.isError).toBe(false);
+	});
+
 	it("answers errors as JSON-RPC", async () => {
 		const app = make();
 		const bad = (await (

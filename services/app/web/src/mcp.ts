@@ -39,8 +39,15 @@ const PROMPTS = [
 	{
 		name: "check_my_site",
 		title: "Check my site for AI search",
-		description: "Check whether AI search can find, read and cite a website, and say what to fix first.",
-		arguments: [{ name: "url", description: "The site address, for example example.com", required: true }],
+		description:
+			"Check whether AI search can find, read and cite a website, and say what to fix first.",
+		arguments: [
+			{
+				name: "url",
+				description: "The site address, for example example.com",
+				required: true,
+			},
+		],
 	},
 ] as const;
 
@@ -61,7 +68,6 @@ function getPrompt(name: string, args: Record<string, unknown> | undefined) {
 		],
 	};
 }
-
 
 export function summarize(report: Report): string {
 	if (report.error) return `Could not read ${report.url}: ${report.error}.`;
@@ -184,7 +190,8 @@ async function handleOne(
 			return ok({
 				content: [{ type: "text", text }],
 				structuredContent: report,
-				isError: Boolean(report.error),
+				// A site the checker could not read is a finished answer (score 0), not a tool failure.
+				isError: false,
 			});
 		}
 		default:
