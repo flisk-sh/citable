@@ -50,7 +50,7 @@ h2{font-size:clamp(26px,4vw,38px);line-height:1.12;letter-spacing:-.03em;margin:
 .steps div{counter-increment:s}.steps div::before{content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--fg);color:var(--bg);font-weight:750;margin-bottom:14px}
 .steps b{display:block;font-size:18px;margin-bottom:6px}.steps p{margin:0;color:var(--muted)}
 .term{background:#0e0f12;color:#e8e6e1;border-radius:14px;padding:18px 20px;font:14px/1.6 var(--mono);overflow-x:auto;border:1px solid #272a31;white-space:pre-wrap;word-break:break-all;margin:0}.term s{text-decoration:none;color:#77746d}
-footer{margin-top:110px;border-top:1px solid var(--line);padding:28px 0 48px;color:var(--muted);font-size:14px}footer .wrap{display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:space-between}footer a{color:var(--muted)}
+footer{margin-top:110px;border-top:1px solid var(--line);padding:28px 0 48px;color:var(--muted);font-size:14px}footer .wrap{display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:space-between}footer a{color:var(--muted)}footer .badge{flex-basis:100%}footer .badge img{display:block;max-width:100%;height:auto}
 .pass{--c:var(--pass)}.warn{--c:var(--warn)}.fail{--c:var(--fail)}.info{--c:var(--info)}
 .summary{margin:36px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:var(--shadow);display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
 .ring{flex:none;width:136px;height:136px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--s)*1%),var(--sunk) 0)}
@@ -172,7 +172,7 @@ ${head(base, meta)}
 <style>${STYLE}</style></head><body>
 <header class="bar stage"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, search)}<nav><a href="${root}/#how">How it works</a><a href="${root}/about">About</a><a href="${SITE.repo}">GitHub</a></nav></div></header>
 <main>${body}</main>
-<footer><div class="wrap"><span>${SITE.name} reads pages the way an AI crawler does: no JavaScript, no model, nothing stored.</span><span><a href="${SITE.repo}">Open source</a> · built and run with <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">About the checker</a></span></div></footer>
+<footer><div class="wrap"><span>${SITE.name} reads pages the way an AI crawler does: no JavaScript, no model, nothing stored.</span><span><a href="${SITE.repo}">Open source</a> · built and run with <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">About the checker</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
 </body></html>`;
 }
 

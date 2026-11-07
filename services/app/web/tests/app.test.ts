@@ -31,6 +31,21 @@ describe("pages", () => {
 		expect(await res.text()).toContain("Can AI answers cite your site?");
 	});
 
+	it("shows the DevHunt badge in the footer and lets its image load", async () => {
+		const res = await make().request("/");
+		const html = await res.text();
+		const footer = html.slice(
+			html.indexOf("<footer"),
+			html.indexOf("</footer>"),
+		);
+		expect(footer).toContain(
+			'<a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a>',
+		);
+		expect(res.headers.get("content-security-policy")).toContain(
+			"img-src 'self' https://devhunt.org;",
+		);
+	});
+
 	it("sends the form to the report address", async () => {
 		const res = await make().request(
 			"/check?url=https%3A%2F%2FAcme.example%2Fpricing",
