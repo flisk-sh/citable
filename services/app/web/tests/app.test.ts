@@ -18,14 +18,14 @@ const rpc = (app: ReturnType<typeof make>, body: unknown) =>
 	});
 
 describe("pages", () => {
-	it("serves the home page with a policy that allows no scripts", async () => {
+	it("serves the home page with a policy that allows only the Flisk bar script", async () => {
 		const res = await make().request("/");
 		expect(res.status).toBe(200);
-		expect(res.headers.get("content-security-policy")).toContain(
-			"default-src 'none'",
-		);
-		expect(res.headers.get("content-security-policy")).not.toContain(
-			"script-src",
+		const csp = res.headers.get("content-security-policy") ?? "";
+		expect(csp).toContain("default-src 'none'");
+		expect(csp).toContain("script-src https://flisk.si;");
+		expect(await res.clone().text()).toContain(
+			'<script src="https://flisk.si/assets/bar.js" defer></script>',
 		);
 		expect(res.headers.get("strict-transport-security")).toContain("max-age=");
 		expect(await res.text()).toContain("Can AI answers cite your site?");
