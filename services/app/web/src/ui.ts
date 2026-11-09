@@ -169,7 +169,7 @@ function layout(
 	const root = rootOf(publicUrl);
 	return `<!doctype html><html lang="${SITE.lang}"><head>
 ${head(base, meta)}
-<style>${STYLE}</style></head><body>
+<style>${STYLE}</style><script src="https://flisk.si/assets/bar.js" defer></script></head><body>
 <header class="bar stage"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, search)}<nav><a href="${root}/#how">How it works</a><a href="${root}/about">About</a><a href="${SITE.repo}">GitHub</a></nav></div></header>
 <main>${body}</main>
 <footer><div class="wrap"><span>${SITE.name} reads pages the way an AI crawler does: no JavaScript, no model, nothing stored.</span><span><a href="${SITE.repo}">Open source</a> · built and run with <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">About the checker</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
