@@ -1,6 +1,6 @@
 {
   "name": "ai-search-checker",
-  "displayName": "Get My Site Found by AI",
+  "displayName": "Citable plugin",
   "version": "1.0.0",
   "description": "Get your website found and quoted by ChatGPT, Claude and Perplexity. A score out of 100 and a fix for each problem. Free, no account.",
   "author": {
