@@ -130,7 +130,7 @@ async function handleOne(
 					? asked
 					: PROTOCOL_VERSIONS[0],
 				capabilities: { tools: {}, prompts: {} },
-				serverInfo: { name: "citable", version: "1.0.0" },
+				serverInfo: { name: "citable", title: "Citable MCP", version: "1.0.0" },
 				instructions:
 					"Use check_site when someone asks whether AI search or chatbots can find, read or cite a website.",
 			});
