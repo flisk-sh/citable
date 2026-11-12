@@ -13,9 +13,9 @@ import {
 } from "./guard";
 import { handleMcp } from "./mcp";
 import { type Fetcher, normalizeTarget, safeFetch } from "./net";
+import { rangeResponse } from "./range";
 import { ICONS, robotsTxt, securityTxt, sitemapXml, webManifest } from "./seo";
 import { aboutPage, badge, EXAMPLES, homePage, reportPage } from "./ui";
-import { VIDEO } from "./video.generated";
 
 export interface AppOptions {
 	fetcher?: Fetcher;
@@ -25,9 +25,16 @@ export interface AppOptions {
 	checksPerHour?: number;
 	/** Checks running at once, for the whole server. */
 	maxChecks?: number;
+	/**
+	 * The how-it-works clip, served with byte ranges. The Bun server passes VIDEO from video.generated.ts; the Worker
+	 * leaves it out (2 MB would not fit a Worker) and serves the same files as static assets.
+	 */
+	video?: Record<string, { type: string; base64: string }>;
+	/** Paths served by something in front of this app (the Worker's static assets): never read as a site to check. */
+	staticFiles?: string[];
 }
 
-const RESERVED = new Set([
+const RESERVED_NAMES = [
 	"",
 	"check",
 	"about",
@@ -42,11 +49,16 @@ const RESERVED = new Set([
 	"site.webmanifest",
 	".well-known",
 	...Object.values(ICONS),
-	...Object.keys(VIDEO),
-]);
+];
 
 export function createApp(options: AppOptions = {}) {
 	const fetcher = options.fetcher ?? safeFetch;
+	const video = options.video ?? {};
+	const RESERVED = new Set([
+		...RESERVED_NAMES,
+		...Object.keys(video),
+		...(options.staticFiles ?? []),
+	]);
 	const proxy = options.proxy ?? "none";
 	const cache = new TtlCache<Report>(60 * 60 * 1000, 2000);
 	const inFlight = new Map<string, Promise<Report | undefined>>();
@@ -160,30 +172,11 @@ export function createApp(options: AppOptions = {}) {
 		c.text(securityTxt(siteOf(c).replace(/\/$/, ""))),
 	);
 	// The how-it-works clip. Safari plays a video only from a server that answers byte ranges.
-	for (const [name, file] of Object.entries(VIDEO)) {
-		const body = Buffer.from(file.base64, "base64");
-		app.get(`/${name}`, (c) => {
-			const headers = {
-				"content-type": file.type,
-				"cache-control": "public, max-age=604800",
-				"accept-ranges": "bytes",
-			};
-			const range = /^bytes=(\d*)-(\d*)$/.exec(c.req.header("range") ?? "");
-			if (!range || (range[1] === "" && range[2] === ""))
-				return c.body(body, 200, headers);
-			const start =
-				range[1] === "" ? body.length - Number(range[2]) : Number(range[1]);
-			const end =
-				range[1] === "" || range[2] === ""
-					? body.length - 1
-					: Math.min(Number(range[2]), body.length - 1);
-			if (start < 0 || start > end)
-				return c.body(null, 416, { "content-range": `bytes */${body.length}` });
-			return c.body(body.subarray(start, end + 1), 206, {
-				...headers,
-				"content-range": `bytes ${start}-${end}/${body.length}`,
-			});
-		});
+	for (const [name, file] of Object.entries(video)) {
+		const body = new Uint8Array(Buffer.from(file.base64, "base64"));
+		app.get(`/${name}`, (c) =>
+			rangeResponse(body, file.type, c.req.header("range")),
+		);
 	}
 	for (const name of Object.values(ICONS)) {
 		const asset = ASSETS[name];

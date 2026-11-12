@@ -1,27 +1,26 @@
 # Deploy Citable at citable.flisk.si (free)
 
-Citable online is one Render web service on the free plan: the `Dockerfile` at the repository root, declared in [`render.yaml`](render.yaml). Nothing else to sign up for: no database (reports live in memory for an hour) and no AI key (every check is deterministic).
+Citable online is one Cloudflare Worker on the free plan: the same Hono app as the Bun server, started from [`services/app/web/src/worker.ts`](services/app/web/src/worker.ts) and configured in [`services/app/web/wrangler.toml`](services/app/web/wrangler.toml). No database (reports live in memory for an hour) and no AI key (every check is deterministic).
 
-What free means here (Render's free tier as described on 2026-10-27, https://render.com/docs/free; re-check before relying on it):
+It moved off Render's free plan on 2026-11-12: every free Render service in the workspace shares one pool of instance hours, and when the pool ran out, Render suspended them all until the next month.
 
-- The service sleeps after 15 minutes without traffic; the next visit waits about a minute. For launch day, set `plan: starter` in `render.yaml` so it never sleeps, and set it back afterwards.
-- 512 MB and 0.1 CPU. A check mostly waits on the network; `CITABLE_MAX_CHECKS=8` keeps it well inside both.
-- Cached reports and rate-limit counters are in memory and reset on every sleep or deploy.
+## What the Worker does differently
 
-## 1. Create the Blueprint
+- **The clip.** `demo.mp4` (1.5 MB) is too big for the Worker bundle, so `bun run worker:assets` writes it and `demo.jpg` to `public/`, and Cloudflare serves them as static assets. Cloudflare's asset server ignores `Range`, so `/demo.mp4` goes through the Worker first, which answers byte ranges for Safari.
+- **Fetching sites.** Each hop is still checked against private addresses (`node:dns` with `nodejs_compat`). The Worker cannot pin the request to the checked address, because its `fetch` has no TLS server name option; it does not need to, since a Worker's `fetch` never reaches a private network.
+- **Limits.** Cached reports and rate-limit counters live in memory per Worker instance, so they reset more often than on a single server.
 
-1. https://dashboard.render.com → **New → Blueprint** → `flisk-sh/citable`, branch `main`.
-2. Render lists one service, `citable`, on the **Free** plan, with the domain `citable.flisk.si`. Nothing to fill in.
-3. **Deploy Blueprint**, then open the `onrender.com` URL Render shows and check a site.
+## Deploy
 
-## 2. Point citable.flisk.si at it
+From `services/app/web`, logged in with `bunx wrangler@4 login`:
 
-1. Render: service `citable` → **Settings → Custom Domains** shows the target, normally `citable.onrender.com`.
-2. Cloudflare: zone `flisk.si` → **DNS → Add record**: `CNAME`, name `citable`, the target from Render, proxy **DNS only** (grey cloud).
-   - With the Cloudflare proxy on, also set `CITABLE_PROXY=cloudflare`, or rate limits key on Cloudflare's addresses.
-3. Render: **Verify** next to the domain.
+```bash
+bun run deploy
+```
 
-## 3. Check it
+That writes `public/` and runs `bunx wrangler@4 deploy`. The custom domain `citable.flisk.si` is created by Cloudflare; the hostname must have no other DNS record in zone `flisk.si` (delete an old `CNAME` first, or the deploy stops with code 100117).
+
+## Check it
 
 ```bash
 curl -s https://citable.flisk.si/ready
@@ -32,11 +31,17 @@ curl -s 'https://citable.flisk.si/api/check?url=flisk.sh' | head -c 300
 ```
 
 ```bash
+curl -s -r 0-1 -o /dev/null -D - https://citable.flisk.si/demo.mp4 | head -1
+```
+
+```bash
 curl -s -X POST https://citable.flisk.si/mcp -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
+
+The range request answers `206`.
 
 ## Limits
 
 - 30 new checks per visitor address per hour (`CITABLE_CHECKS_PER_HOUR`); views of a report already in memory do not count. 120 MCP calls per minute.
-- The checker reaches only public addresses on ports 80 and 443, and checks every redirect again. A host that resolves differently between the check and the request (DNS rebinding) is not covered; the checker only reads, with GET.
-- The response time is measured from Frankfurt and says so on the report.
+- The checker reaches only public addresses on ports 80 and 443, and checks every redirect again. The checker only reads, with GET.
+- Workers Free allows 100,000 requests a day and 10 ms of CPU per request; a check mostly waits on the network.

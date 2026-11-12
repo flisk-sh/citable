@@ -1,0 +1,21 @@
+# citable.flisk.si runs on Cloudflare Workers (free). Deploy: bun run deploy
+# The custom domain needs no DNS record of its own; Cloudflare creates it.
+name = "citable"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+# net.ts resolves host names with node:dns before it reads a site, and refuses private addresses.
+compatibility_flags = ["nodejs_compat"]
+routes = [{ pattern = "citable.flisk.si", custom_domain = true }]
+
+# demo.mp4 and demo.jpg, written by `bun run worker:assets`. A path with no file falls through to the Worker.
+# Cloudflare's asset server ignores Range, so /demo.mp4 goes to the Worker first, which answers byte ranges.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/demo.mp4"]
+
+[vars]
+CITABLE_PUBLIC_URL = "https://citable.flisk.si/"
+CITABLE_PROXY = "cloudflare"
+CITABLE_CHECKS_PER_HOUR = "30"
+CITABLE_MAX_CHECKS = "8"

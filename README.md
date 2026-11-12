@@ -70,7 +70,7 @@ At most four GET requests to the site: the page, `/robots.txt`, `/llms.txt` and 
 
 ## Online
 
-citable.flisk.si is one Render free web service from [`render.yaml`](render.yaml) and the root [`Dockerfile`](Dockerfile). [DEPLOY.md](DEPLOY.md) has the steps.
+citable.flisk.si is one Cloudflare Worker on the free plan ([`services/app/web/wrangler.toml`](services/app/web/wrangler.toml), entry [`src/worker.ts`](services/app/web/src/worker.ts)): the same app, with the how-it-works clip served as static assets. The root [`Dockerfile`](Dockerfile) still runs it on any container host. [DEPLOY.md](DEPLOY.md) has the steps.
 
 Built and run with [Flisk](https://github.com/flisk-sh/flisk). MIT licensed.
 

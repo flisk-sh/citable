@@ -11,7 +11,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "icons": "bun scripts/icons.ts",
-    "video": "cd ../../.. && bun video/shots.ts && bun video/render.ts"
+    "video": "cd ../../.. && bun video/shots.ts && bun video/render.ts",
+    "worker:assets": "bun scripts/worker-assets.ts",
+    "deploy": "bun run worker:assets && bunx wrangler@4 deploy"
   },
   "dependencies": {
     "hono": "^4.0.0"

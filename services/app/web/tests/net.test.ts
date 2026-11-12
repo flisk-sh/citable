@@ -170,6 +170,40 @@ describe("pinned requests", () => {
 		expect(lookups).toBe(1);
 	});
 
+	it("without pinning (the Worker), still checks every hop but asks for the host name", async () => {
+		const seen: { url: string; host: string | null; tls: unknown }[] = [];
+		spyOn(globalThis, "fetch").mockImplementation((async (
+			input: URL,
+			init: RequestInit & { tls?: unknown },
+		) => {
+			seen.push({
+				url: String(input),
+				host: new Headers(init.headers).get("host"),
+				tls: init.tls,
+			});
+			return String(input).startsWith("https://public.example")
+				? new Response(null, {
+						status: 302,
+						headers: { location: "http://inside.example/" },
+					})
+				: new Response("<title>ok</title>", { status: 200 });
+		}) as never);
+		const ok = await safeFetch("https://public.example/a", {
+			resolve: (async (host: string) => [
+				{
+					address: host === "inside.example" ? "10.0.0.5" : "93.184.216.34",
+					family: 4,
+				},
+			]) as never,
+			pin: false,
+		});
+		expect(seen).toEqual([
+			{ url: "https://public.example/a", host: null, tls: undefined },
+		]);
+		expect(ok.error).toBe("refused: the host resolves to a private address");
+		expect(ok.finalUrl).toBe("http://inside.example/");
+	});
+
 	it("gives up on a name server that does not answer in time", async () => {
 		const hang = (() => new Promise(() => {})) as never;
 		const page = await safeFetch("http://slow.example/", {

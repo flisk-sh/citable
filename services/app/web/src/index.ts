@@ -9,6 +9,7 @@
 //   CITABLE_MAX_CHECKS       checks running at once (8)
 import { createApp } from "./app";
 import { parseProxyMode } from "./guard";
+import { VIDEO } from "./video.generated";
 
 const port = Number(process.env.PORT) || 4000;
 const app = createApp({
@@ -16,6 +17,7 @@ const app = createApp({
 	proxy: parseProxyMode(process.env.CITABLE_PROXY),
 	checksPerHour: Number(process.env.CITABLE_CHECKS_PER_HOUR) || undefined,
 	maxChecks: Number(process.env.CITABLE_MAX_CHECKS) || undefined,
+	video: VIDEO,
 });
 
 console.log(`citable listening on http://localhost:${port}`);
