@@ -6,6 +6,9 @@ compatibility_date = "2026-10-01"
 # net.ts resolves host names with node:dns before it reads a site, and refuses private addresses.
 compatibility_flags = ["nodejs_compat"]
 routes = [{ pattern = "citable.flisk.si", custom_domain = true }]
+# Keep citable.oranguman.workers.dev answering too: without this, a deploy with routes switches it off.
+workers_dev = true
+preview_urls = false
 
 # demo.mp4 and demo.jpg, written by `bun run worker:assets`. A path with no file falls through to the Worker.
 # Cloudflare's asset server ignores Range, so /demo.mp4 goes to the Worker first, which answers byte ranges.
