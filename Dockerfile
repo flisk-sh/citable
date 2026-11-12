@@ -1,4 +1,4 @@
-# Production image for Citable online (Render, or any container host). `flisk up` does not use this file: locally,
+# Container image for Citable (any container host; citable.flisk.si itself runs as a Cloudflare Worker). `flisk up` does not use this file: locally,
 # Flisk builds its own image from services/app/web/service.json.
 # 1.4: safeFetch connects to the address it checked and names the host through fetch's tls.serverName.
 FROM oven/bun:1.4-slim

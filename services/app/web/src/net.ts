@@ -159,6 +159,12 @@ export interface FetchOptions {
 	 * checks their own sites, local and staging ones included, and runs on Node, whose fetch has no TLS server name.
 	 */
 	direct?: boolean;
+	/**
+	 * Send the request to the checked address (default) or to the host name after checking it. Pinning needs Bun's
+	 * `tls.serverName`; a Cloudflare Worker has no such option, and its fetch never reaches a private network anyway,
+	 * so the Worker checks every hop but lets fetch resolve the name.
+	 */
+	pin?: boolean;
 }
 
 /** Fetches with GET, following up to `maxRedirects` redirects by hand and checking each hop. Never throws. */
@@ -172,6 +178,7 @@ export async function safeFetch(
 		maxRedirects = 5,
 		resolve = lookup,
 		direct = false,
+		pin = true,
 	} = options;
 	const started = Date.now();
 	const failed = (error: string, finalUrl = url): Fetched => ({
@@ -205,7 +212,9 @@ export async function safeFetch(
 		]);
 		if (!vetted) return `no answer within ${timeoutMs / 1000} seconds`;
 		if (!("address" in vetted)) return `refused: ${vetted.refused}`;
-		return pinned(url, vetted.address);
+		return pin
+			? pinned(url, vetted.address)
+			: { input: url, host: undefined, serverName: undefined };
 	};
 	for (let hop = 0; hop <= maxRedirects; hop++) {
 		const target = direct

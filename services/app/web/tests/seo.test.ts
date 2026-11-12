@@ -3,9 +3,11 @@ import { createApp } from "../src/app";
 import { ASSETS } from "../src/assets.generated";
 import { ICONS } from "../src/seo";
 import { SITE } from "../src/site";
+import { VIDEO } from "../src/video.generated";
 import { fakeFetcher, goodSite } from "./fixtures";
 
 const app = createApp({
+	video: VIDEO,
 	fetcher: fakeFetcher(goodSite()),
 	publicUrl: "https://citable.test/",
 });

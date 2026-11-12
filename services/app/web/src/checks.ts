@@ -629,7 +629,7 @@ function llmsCheck(llms: Fetched): Check {
 
 function speedCheck(ms: number): Check {
 	const max = 5;
-	const summary = `The first byte of the page arrived after ${ms} ms (measured from Frankfurt, redirects included).`;
+	const summary = `The first byte of the page arrived after ${ms} ms (measured from where the check ran, redirects included).`;
 	if (ms < 800)
 		return {
 			id: "speed",
