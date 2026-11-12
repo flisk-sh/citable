@@ -29,13 +29,13 @@ gates a build.
 
 ## Options
 
-| Option | |
-| --- | --- |
-| `--min-score <n>` | Exit 1 when a page scores below `n` |
-| `--skip <ids>` | Leave checks out; the rest are scored out of 100. Ids: `ai-crawlers`, `indexable`, `content`, `title`, `structured-data`, `headings`, `canonical`, `sitemap`, `llms-txt`, `speed` |
-| `--json` | The full reports as JSON |
-| `--markdown` | A Markdown table, for `$GITHUB_STEP_SUMMARY` |
-| `--timeout <ms>` | Time limit per request (8000) |
+| Option            |                                                                                                                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--min-score <n>` | Exit 1 when a page scores below `n`                                                                                                                                               |
+| `--skip <ids>`    | Leave checks out; the rest are scored out of 100. Ids: `ai-crawlers`, `indexable`, `content`, `title`, `structured-data`, `headings`, `canonical`, `sitemap`, `llms-txt`, `speed` |
+| `--json`          | The full reports as JSON                                                                                                                                                          |
+| `--markdown`      | A Markdown table, for `$GITHUB_STEP_SUMMARY`                                                                                                                                      |
+| `--timeout <ms>`  | Time limit per request (8000)                                                                                                                                                     |
 
 Give several addresses to check several pages. Exit codes: `0` passed, `1` below `--min-score`, `2` a page could not be
 read or the usage is wrong.
