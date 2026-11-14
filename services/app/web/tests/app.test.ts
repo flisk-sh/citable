@@ -23,9 +23,11 @@ describe("pages", () => {
 		expect(res.status).toBe(200);
 		const csp = res.headers.get("content-security-policy") ?? "";
 		expect(csp).toContain("default-src 'none'");
-		expect(csp).toContain("script-src https://flisk.si;");
-		expect(await res.clone().text()).toContain(
-			'<script src="https://flisk.si/assets/bar.js" defer></script>',
+		expect(csp).toContain("script-src https://flisk.si https://flisk.sh;");
+		expect(csp).toContain("connect-src https://analytics.flisk.si;");
+		const html = await res.clone().text();
+		expect(html).toContain(
+			'<script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" defer></script>',
 		);
 		expect(res.headers.get("strict-transport-security")).toContain("max-age=");
 		expect(await res.text()).toContain("Can AI answers cite your site?");
