@@ -147,8 +147,16 @@ export function createApp(options: AppOptions = {}) {
 
 	app.get("/health", (c) => c.json({ status: "ok", service: "citable" }));
 	app.get("/ready", (c) => c.json({ ready: true }));
-	app.get("/", (c) => c.html(homePage(siteOf(c))));
-	app.get("/about", (c) => c.html(aboutPage(siteOf(c))));
+	app.get("/", (c) =>
+		c.html(homePage(siteOf(c)), 200, {
+			"cache-control": "public, max-age=300",
+		}),
+	);
+	app.get("/about", (c) =>
+		c.html(aboutPage(siteOf(c)), 200, {
+			"cache-control": "public, max-age=300",
+		}),
+	);
 	app.get("/robots.txt", (c) =>
 		c.text(robotsTxt(siteOf(c).replace(/\/$/, ""))),
 	);

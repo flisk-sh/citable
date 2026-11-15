@@ -13,3 +13,7 @@ video/film.run.html
 video/.chrome-profile/
 public/
 .wrangler/
+
+!services/app/web/public/
+services/app/web/public/*
+!services/app/web/public/_headers
