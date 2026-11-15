@@ -1,0 +1,5 @@
+/demo.jpg
+  Cache-Control: public, max-age=604800
+
+/demo.mp4
+  Cache-Control: public, max-age=604800

@@ -368,6 +368,26 @@ describe("prompts", () => {
 	});
 });
 
+describe("public page caching", () => {
+	it("caches only the two visitor-independent HTML pages", async () => {
+		for (const path of ["/", "/about"]) {
+			const response = await make().request(path);
+			expect(response.status).toBe(200);
+			expect(response.headers.get("cache-control")).toBe("public, max-age=300");
+		}
+		for (const path of [
+			"/missing/path",
+			"/example.com",
+			"/api/check?url=example.com",
+		]) {
+			const response = await make().request(path);
+			expect(response.headers.get("cache-control") ?? "").not.toContain(
+				"public",
+			);
+		}
+	});
+});
+
 describe("refused API targets", () => {
 	it.each([
 		["127.0.0.1", "refused: the host is a private address"],
