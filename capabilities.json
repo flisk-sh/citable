@@ -1,0 +1,17 @@
+{
+  "service": "citable",
+  "origin": "https://citable.flisk.si",
+  "auth": "none",
+  "capabilities": [
+    {
+      "id": "check",
+      "title": "AI search check",
+      "does": "Scores whether AI search can read and cite a page, with the fixes that matter most.",
+      "input": { "url": "the page to check" },
+      "asks": ["can AI find my site", "will ChatGPT cite my site", "check my site for AI search"],
+      "endpoint": "https://citable.flisk.si/api/check?url={url}",
+      "output": { "score": "0-100", "grade": "A-F", "checks": "list of { title, status, summary }" },
+      "needsComputer": false
+    }
+  ]
+}
