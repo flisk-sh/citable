@@ -211,7 +211,7 @@ export function createApp(options: AppOptions = {}) {
 		const result = await report(target, ipOf(c), c.req.query("fresh") === "1");
 		if ("status" in result && !("checks" in result))
 			return c.json({ error: result.error }, result.status as 429 | 503);
-		if (result.error?.startsWith("refused:"))
+		if (typeof result.error === "string" && result.error.startsWith("refused:"))
 			return c.json({ error: result.error }, 400, {
 				"access-control-allow-origin": "*",
 			});
