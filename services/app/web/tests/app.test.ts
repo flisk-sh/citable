@@ -367,3 +367,35 @@ describe("prompts", () => {
 		expect(got.error.code).toBe(-32602);
 	});
 });
+
+describe("refused API targets", () => {
+	it.each([
+		["127.0.0.1", "refused: the host is a private address"],
+
+		["down.example", "refused: no answer"],
+		["private.example", "refused: the host resolves to a private address"],
+	])("returns an error without a grade for %s", async (host, error) => {
+		const app = createApp({
+			fetcher: fakeFetcher({ ["https://" + host + "/"]: { status: 0, error } }),
+		});
+		const response = await app.request(
+			"/api/check?url=" + encodeURIComponent(host),
+		);
+		expect(response.status).toBe(400);
+		expect(await response.json()).toEqual({ error });
+		expect(response.headers.get("access-control-allow-origin")).toBe("*");
+	});
+});
+
+it("rejects an invalid IPv6 target before fetching", async () => {
+	const calls: string[] = [];
+	const app = createApp({ fetcher: fakeFetcher({}, calls) });
+	const response = await app.request(
+		"/api/check?url=" + encodeURIComponent("[::1]"),
+	);
+	expect(response.status).toBe(400);
+	expect(await response.json()).toEqual({
+		error: "Give ?url=, for example ?url=example.com",
+	});
+	expect(calls).toEqual([]);
+});
