@@ -35,6 +35,16 @@ describe("pages", () => {
 		expect(await res.text()).toContain("Can AI answers cite your site?");
 	});
 
+	it("lets the Flisk org bar load its product icons", async () => {
+		const res = await make().request("/");
+		const csp = res.headers.get("content-security-policy") ?? "";
+		const imgSrc = csp
+			.split(";")
+			.map((directive) => directive.trim())
+			.find((directive) => directive.startsWith("img-src"));
+		expect(imgSrc).toBe("img-src 'self' https://devhunt.org https://flisk.si");
+	});
+
 	it("shows the DevHunt badge in the footer and lets its image load", async () => {
 		const res = await make().request("/");
 		const html = await res.text();
@@ -46,7 +56,7 @@ describe("pages", () => {
 			'<a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a>',
 		);
 		expect(res.headers.get("content-security-policy")).toContain(
-			"img-src 'self' https://devhunt.org;",
+			"img-src 'self' https://devhunt.org https://flisk.si;",
 		);
 	});
 
