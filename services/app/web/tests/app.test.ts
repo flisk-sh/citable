@@ -107,6 +107,38 @@ describe("pages", () => {
 		expect(calls.length).toBe(fetched);
 	});
 
+	it.each([
+		"/manifest.webmanifest",
+		"/nope.txt",
+		"/nope.json",
+		"/nope.png",
+		"/nope.svg",
+		"/nope.js",
+		"/nope.css",
+		"/nope.html",
+		"/nope.xml",
+		"/nope.ico",
+	])("does not treat the static-file path %s as a site", async (path) => {
+		const calls: string[] = [];
+		const response = await make(calls).request(path);
+		expect(response.status).toBe(404);
+		expect(calls).toEqual([]);
+	});
+
+	it("renders an unreachable domain as a report, not a server error", async () => {
+		const error = "could not resolve example.invalid";
+		const app = createApp({
+			fetcher: fakeFetcher({
+				"https://example.invalid/": { status: 0, error },
+			}),
+		});
+		const response = await app.request("/example.invalid");
+		expect(response.status).toBe(200);
+		expect(await response.text()).toContain(
+			`Could not read the page: ${error}.`,
+		);
+	});
+
 	it("says what each fix is worth, and the total", async () => {
 		const site = goodSite();
 		delete site["https://acme.example/llms.txt"];
