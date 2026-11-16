@@ -141,7 +141,7 @@ export function securityHeaders(): Record<string, string> {
 			"form-action 'self'",
 			"frame-ancestors 'none'",
 		].join("; "),
-		"strict-transport-security": "max-age=31536000",
+		"strict-transport-security": "max-age=31536000; includeSubDomains",
 		"x-content-type-options": "nosniff",
 		"referrer-policy": "strict-origin-when-cross-origin",
 		"permissions-policy": "camera=(), microphone=(), geolocation=()",
