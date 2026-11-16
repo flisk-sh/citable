@@ -5,6 +5,7 @@ import { createApp } from "./app";
 import { parseProxyMode } from "./guard";
 import { safeFetch } from "./net";
 import { rangeResponse } from "./range";
+import { withSecurityHeaders } from "./security-headers";
 
 interface Env {
 	/** The static assets (public/); wrangler.toml sends /demo.mp4 here first so this Worker can answer byte ranges. */
@@ -24,11 +25,17 @@ export const STATIC_FILES = ["demo.mp4", "demo.jpg"];
 let app: ReturnType<typeof createApp> | undefined;
 
 export default {
-	fetch(
-		request: Request,
-		env: Env,
-		ctx: unknown,
-	): Response | Promise<Response> {
+	async fetch(request: Request, env: Env, ctx: unknown): Promise<Response> {
+		return withSecurityHeaders(await handle(request, env, ctx));
+	},
+};
+
+function handle(
+	request: Request,
+	env: Env,
+	ctx: unknown,
+): Response | Promise<Response> {
+	{
 		const name = new URL(request.url).pathname.slice(1);
 		if (env.ASSETS && RANGED_FILES.includes(name))
 			return ranged(request, env.ASSETS);
@@ -42,8 +49,8 @@ export default {
 			fetcher: (url, options) => safeFetch(url, { ...options, pin: false }),
 		});
 		return app.fetch(request, env, ctx as never);
-	},
-};
+	}
+}
 
 async function ranged(
 	request: Request,
