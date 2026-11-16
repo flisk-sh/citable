@@ -51,6 +51,19 @@ const RESERVED_NAMES = [
 	...Object.values(ICONS),
 ];
 
+const STATIC_FILE_EXTENSIONS = new Set([
+	"webmanifest",
+	"txt",
+	"json",
+	"png",
+	"svg",
+	"js",
+	"css",
+	"html",
+	"xml",
+	"ico",
+]);
+
 export function createApp(options: AppOptions = {}) {
 	const fetcher = options.fetcher ?? safeFetch;
 	const video = options.video ?? {};
@@ -295,6 +308,13 @@ export function createApp(options: AppOptions = {}) {
 		} catch {
 			return c.html(homePage(siteOf(c), true), 404);
 		}
+		const fileExtension = decoded.match(/\.([^.]+)$/)?.[1].toLowerCase();
+		if (
+			!decoded.includes("/") &&
+			fileExtension &&
+			STATIC_FILE_EXTENSIONS.has(fileExtension)
+		)
+			return c.notFound();
 		const target = normalizeTarget(decoded + (query ? `?${query}` : ""));
 		if (!target) return c.html(homePage(siteOf(c), true), 404);
 		// One address per page: https://example.com/ and example.com both land on /example.com.
@@ -312,7 +332,7 @@ export function createApp(options: AppOptions = {}) {
 			);
 		if (!("checks" in result))
 			return c.text(result.error, result.status as 429 | 503);
-		return c.html(reportPage(result, siteOf(c)), result.error ? 502 : 200);
+		return c.html(reportPage(result, siteOf(c)), 200);
 	});
 
 	return app;
