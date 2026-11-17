@@ -1,6 +1,7 @@
 // The pages, rendered on the server with no JavaScript: the home page with its form, a report, and the badge. The
 // Content-Security-Policy in index.ts allows no scripts at all.
 import { type Check, CRAWLERS, type Report } from "./checks";
+import { COPY, checkTitle, type Lang } from "./i18n";
 import { esc, faqJsonLd, head, ICONS, type PageMeta } from "./seo";
 import { SITE } from "./site";
 
@@ -155,60 +156,31 @@ const rootOf = (publicUrl: string) =>
 	new URL(publicUrl).pathname.replace(/\/$/, "");
 
 /** The address bar the visitor types into: Citable's host in front, as the address it will open. */
-const form = (publicUrl: string, value = "") =>
-	`<form class="addr" action="${rootOf(publicUrl)}/check" method="get" role="search"><span class="pre" aria-hidden="true">${esc(new URL(publicUrl).host)}/</span><input type="text" name="url" value="${esc(value)}" placeholder="example.com" aria-label="Site address" autocomplete="url" inputmode="url" spellcheck="false" required><button type="submit">Check</button></form>`;
+const form = (publicUrl: string, lang: Lang, value = "") =>
+	`<form class="addr" action="${rootOf(publicUrl)}/check" method="get" role="search"><span class="pre" aria-hidden="true">${esc(new URL(publicUrl).host)}/</span><input type="text" name="url" value="${esc(value)}" placeholder="example.com" aria-label="${esc(COPY[lang].addressLabel)}" autocomplete="url" inputmode="url" spellcheck="false" required><button type="submit">${COPY[lang].check}</button></form>`;
 
 /** `publicUrl` is the site's own address, ending in a slash; `meta.path` is the page under it. */
 function layout(
 	publicUrl: string,
+	lang: Lang,
 	meta: PageMeta,
 	body: string,
 	search?: string,
 ): string {
 	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
-	return `<!doctype html><html lang="${SITE.lang}"><head>
-${head(base, meta)}
+	const c = COPY[lang];
+	return `<!doctype html><html lang="${c.htmlLang}"><head>
+${head(base, meta, lang)}
 <style>${STYLE}</style><script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" defer></script></head><body>
-<header class="bar stage"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, search)}<nav><a href="${root}/#how">How it works</a><a href="${root}/about">About</a><a href="${SITE.repo}">GitHub</a></nav></div></header>
+<header class="bar stage"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, lang, search)}<nav><a href="${root}/#how">${c.navHow}</a><a href="${root}/about">${c.navAbout}</a><a href="${SITE.repo}">GitHub</a><a href="?lang=${c.switchTo}" hreflang="${c.switchTo}" lang="${c.switchTo}" rel="nofollow">${c.switchLabel}</a></nav></div></header>
 <main>${body}</main>
-<footer><div class="wrap"><span>${SITE.name} reads pages the way an AI crawler does: no JavaScript, no model, nothing stored.</span><span><a href="${SITE.repo}">Open source</a> · built and run with <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">About the checker</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
+<footer><div class="wrap"><span>${SITE.name} ${c.footerNote}</span><span><a href="${SITE.repo}">${c.footerOpen}</a> · ${c.footerBuilt} <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">${c.footerAbout}</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
 </body></html>`;
 }
 
 /** What the report scores, for the home page; the weights match checks.ts. */
-const CHECKS: [string, number, string][] = [
-	[
-		"AI crawlers allowed",
-		25,
-		"robots.txt, read for each answer engine's crawler on its own.",
-	],
-	[
-		"Indexable and quotable",
-		15,
-		"Status, HTTPS, and no noindex or nosnippet in the page or its headers.",
-	],
-	[
-		"Readable without JavaScript",
-		15,
-		"The text is in the HTML the server sends, not painted in later.",
-	],
-	[
-		"Title and description",
-		10,
-		"Present, and a length engines show next to the citation.",
-	],
-	["Structured data", 10, "schema.org JSON-LD that says what the page is."],
-	["Headings", 5, "One h1, and h2 sections engines can quote on their own."],
-	["Canonical address", 5, "One address for the page, so citations add up."],
-	["Sitemap", 5, "Listed in robots.txt, so crawlers find every page."],
-	["llms.txt", 5, "A short map of the site written for language models."],
-	[
-		"Response time",
-		5,
-		"Time to first byte, which crawlers on a budget notice.",
-	],
-];
+const CHECK_WEIGHTS = [25, 15, 15, 10, 10, 5, 5, 5, 5, 5];
 
 /** The engines the hero names, with a colour each. */
 const ENGINES: [string, string][] = [
@@ -220,68 +192,77 @@ const ENGINES: [string, string][] = [
 ];
 
 /** The hero's sample report: what a report looks like, with made-up results for a made-up site. */
-const sample = (
-	host: string,
-) => `<figure class="sample" aria-label="A sample report"><div class="top">${esc(host)}/acme.com<em>Sample report</em></div>
-<div class="head"><div class="ring fail" style="--s:41" role="img" aria-label="Score 41 of 100"><b>41<small>grade D</small></b></div><p><strong>acme.com</strong>3 things to fix, worth up to 34 points</p></div>
-<ol><li><span class="ic fail" aria-hidden="true">✕</span>AI crawlers allowed<span class="gain fail">+18</span><small>robots.txt blocks OAI-SearchBot and Claude-SearchBot</small></li>
-<li><span class="ic warn" aria-hidden="true">!</span>Readable without JavaScript<span class="gain warn">+11</span><small>Only 40 words in the HTML before scripts run</small></li>
-<li><span class="ic fail" aria-hidden="true">✕</span>llms.txt<span class="gain fail">+5</span><small>Not found at /llms.txt</small></li>
-<li><span class="ic pass" aria-hidden="true">✓</span>Title and description<span class="gain pass">10 / 10</span><small>Both present, at lengths engines show</small></li></ol>
-<ul class="bots"><li><span class="ic fail" aria-hidden="true">✕</span>ChatGPT</li><li><span class="ic fail" aria-hidden="true">✕</span>Claude</li><li><span class="ic pass" aria-hidden="true">✓</span>Perplexity</li><li><span class="ic pass" aria-hidden="true">✓</span>Google</li></ul></figure>`;
+const SAMPLE_STATES = [
+	["fail", "✕"],
+	["warn", "!"],
+	["fail", "✕"],
+	["pass", "✓"],
+] as const;
+const sample = (host: string, lang: Lang) => {
+	const x = COPY[lang].sample;
+	const bots = [
+		["fail", "✕", "ChatGPT"],
+		["fail", "✕", "Claude"],
+		["pass", "✓", "Perplexity"],
+		["pass", "✓", "Google"],
+	];
+	return `<figure class="sample" aria-label="${esc(x.aria)}"><div class="top">${esc(host)}/acme.com<em>${x.label}</em></div>
+<div class="head"><div class="ring fail" style="--s:41" role="img" aria-label="${esc(x.score)}"><b>41<small>${x.grade}</small></b></div><p><strong>acme.com</strong>${x.summary}</p></div>
+<ol>${x.rows.map(([t, g, d], n) => `<li><span class="ic ${SAMPLE_STATES[n][0]}" aria-hidden="true">${SAMPLE_STATES[n][1]}</span>${t}<span class="gain ${SAMPLE_STATES[n][0]}">${g}</span><small>${d}</small></li>`).join("")}</ol>
+<ul class="bots">${bots.map(([k, g, n]) => `<li><span class="ic ${k}" aria-hidden="true">${g}</span>${n}</li>`).join("")}</ul></figure>`;
+};
 
-/** The numbers under the hero, each true of every check. */
-const STATS: [string, string][] = [
-	["10", "checks, weighted by what decides a citation"],
-	[
-		`${CRAWLERS.filter((c) => c.role === "answers").length}`,
-		"answer-engine crawlers, read one by one",
-	],
-	["4", "requests at most, all of them GETs"],
-	["0", "accounts, models or stored pages"],
-];
+/** The numbers under the hero, each true of every check; the second counts the answer crawlers. */
+const stats = (lang: Lang): [string, string][] =>
+	COPY[lang].stats.map(([n, t]): [string, string] => [
+		n || `${CRAWLERS.filter((c) => c.role === "answers").length}`,
+		t,
+	]);
 
 /** The home page; `noindex` when it answers an address that is not a site (404). */
-export function homePage(publicUrl: string, noindex = false): string {
+export function homePage(
+	publicUrl: string,
+	noindex = false,
+	lang: Lang = "en",
+): string {
 	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
+	const c = COPY[lang];
+	const host = esc(new URL(publicUrl).host);
 	return layout(
 		publicUrl,
+		lang,
 		{
 			path: "",
-			title: `${SITE.name}: ${SITE.tagline}`,
-			description: SITE.description,
+			title: `${SITE.name}: ${c.tagline}`,
+			description: c.description,
 			noindex,
 		},
 		`<section class="hero stage"><div class="wrap">
-<span class="pill"><i></i>Open source · with an MCP server</span>
-<h1>Can AI answers <em class="grad">cite</em> your site?</h1>
-<p class="lede">Put <b>${esc(new URL(publicUrl).host)}/</b> in front of any address. Citable reads your page like AI crawlers do and tells you what keeps it out of their answers, with the fix.</p>
-${form(publicUrl)}
-<p class="note"><b>●</b> Free score in seconds · No signup · Nothing stored</p>
-<p class="examples">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
-<p class="engines"><span>Checked crawler by crawler for</span>${ENGINES.map(([n, c]) => `<b style="--d:${c}"><i></i>${n}</b>`).join("")}</p>
-${sample(new URL(publicUrl).host)}
-<div class="stats">${STATS.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+<span class="pill"><i></i>${c.pill}</span>
+<h1>${c.h1Before}<em class="grad">${c.h1Em}</em>${c.h1After}</h1>
+<p class="lede">${c.lede(host)}</p>
+${form(publicUrl, lang)}
+<p class="note">${c.note}</p>
+<p class="examples">${c.tryLabel} ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
+<p class="engines"><span>${c.enginesLabel}</span>${ENGINES.map(([n, col]) => `<b style="--d:${col}"><i></i>${n}</b>`).join("")}</p>
+${sample(new URL(publicUrl).host, lang)}
+<div class="stats">${stats(lang)
+			.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`)
+			.join("")}</div>
 </div></section><div class="wrap">
-<section class="block"><p class="kicker">See it run</p><h2>From address to fix in 23 seconds.</h2><p class="sub">Type the prefix, read the score, open a fix, and hand the whole list to your own AI.</p>
+<section class="block"><p class="kicker">${c.filmKicker}</p><h2>${c.filmTitle}</h2><p class="sub">${c.filmSub}</p>
 <figure class="film"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div><img class="still" src="${root}/demo.jpg" width="960" height="540" alt=""><video src="${root}/demo.mp4" poster="${root}/demo.jpg" width="960" height="540" autoplay muted loop playsinline controls preload="metadata" aria-describedby="demo-text"></video>
-<figcaption id="demo-text" class="sr">A 23-second film: citable.flisk.si/ is typed in front of stripe.com in a browser, the report scores it 96 out of 100, the camera moves to a check and its fix, and a click on Ask Claude hands the fixes to your own AI.</figcaption></figure></section>
-<section class="block" id="how"><p class="kicker">How it works</p><h2>One address, one honest report.</h2><p class="sub">No account, no browser extension, no model guessing. Citable fetches what a crawler fetches and reads it the same way.</p>
-<div class="steps"><div><p class="mini" aria-hidden="true">${esc(new URL(publicUrl).host)}/<i>acme.com</i></p><b>Prefix any address</b><p>citable.flisk.si/your-site.com, or paste it in the box above. Any page works, not only home pages.</p></div><div><p class="mini" aria-hidden="true"><i>robots.txt</i><i>llms.txt</i><i>sitemap.xml</i></p><b>Read it like a crawler</b><p>The page, robots.txt, llms.txt and the sitemap, with no JavaScript, as the seven answer crawlers see them.</p></div><div><p class="mini" aria-hidden="true"><span class="to lo">41</span>→<span class="to hi">92</span> after the fixes</p><b>Fix what blocks citations</b><p>Each problem comes with the exact change to make, and a button that hands the list to your own AI.</p></div></div></section>
-<section class="block"><p class="kicker">What it checks</p><h2>Ten checks, scored out of 100.</h2><p class="sub">Weighted by how much each one decides whether an answer engine can quote you at all.</p>
-<div class="grid">${CHECKS.map(([t, w, d]) => `<div class="tile" style="--w:${w * 4}"><span class="w">${w}</span><b>${t}</b><p>${d}</p></div>`).join("")}</div></section>
-<section class="block narrow"><p class="kicker">In your AI</p><h2>Ask your assistant directly.</h2><p class="sub">Citable is also an MCP server. Add it once, then ask "can AI cite example.com?"</p>
+<figcaption id="demo-text" class="sr">${c.filmCaption}</figcaption></figure></section>
+<section class="block" id="how"><p class="kicker">${c.howKicker}</p><h2>${c.howTitle}</h2><p class="sub">${c.howSub}</p>
+<div class="steps"><div><p class="mini" aria-hidden="true">${host}/<i>acme.com</i></p><b>${c.steps[0][0]}</b><p>${c.steps[0][1]}</p></div><div><p class="mini" aria-hidden="true"><i>robots.txt</i><i>llms.txt</i><i>sitemap.xml</i></p><b>${c.steps[1][0]}</b><p>${c.steps[1][1]}</p></div><div><p class="mini" aria-hidden="true"><span class="to lo">41</span>→<span class="to hi">92</span> ${c.afterFixes}</p><b>${c.steps[2][0]}</b><p>${c.steps[2][1]}</p></div></div></section>
+<section class="block"><p class="kicker">${c.checksKicker}</p><h2>${c.checksTitle}</h2><p class="sub">${c.checksSub}</p>
+<div class="grid">${c.checks.map(([t, d], n) => `<div class="tile" style="--w:${CHECK_WEIGHTS[n] * 4}"><span class="w">${CHECK_WEIGHTS[n]}</span><b>${t}</b><p>${d}</p></div>`).join("")}</div></section>
+<section class="block narrow"><p class="kicker">${c.mcpKicker}</p><h2>${c.mcpTitle}</h2><p class="sub">${c.mcpSub}</p>
 <pre class="term"><s>$</s> claude mcp add --transport http citable ${esc(base)}/mcp</pre></section></div>`,
 	);
 }
 
-const statusWord: Record<Check["status"], string> = {
-	pass: "Pass",
-	warn: "Improve",
-	fail: "Fix",
-	info: "Note",
-};
 const glyph: Record<Check["status"], string> = {
 	pass: "✓",
 	warn: "!",
@@ -291,7 +272,9 @@ const glyph: Record<Check["status"], string> = {
 const icon = (s: Check["status"]) =>
 	`<span class="ic ${s}" aria-hidden="true">${glyph[s]}</span>`;
 
-function checkCard(c: Check): string {
+function checkCard(c: Check, lang: Lang): string {
+	const t = COPY[lang];
+	const statusWord = t.status;
 	const gain = Math.round(c.max - c.points);
 	const meter =
 		c.max > 0 && gain > 0 && (c.status === "fail" || c.status === "warn")
@@ -299,40 +282,39 @@ function checkCard(c: Check): string {
 			: c.max > 0
 				? `<span class="meter"><span style="--p:${Math.round((100 * c.points) / c.max)}"><i></i></span>${Math.round(c.points)} / ${c.max}</span>`
 				: `<span class="meter">${statusWord[c.status]}</span>`;
-	return `<section class="check ${c.status}">${icon(c.status)}<h4>${esc(c.title)}${meter}</h4>
-<div class="body"><p><span class="sr">${statusWord[c.status]}: </span>${esc(c.summary)}</p>${c.fix ? `<div class="fix"><strong>How to fix</strong>${esc(c.fix)}</div>` : ""}${
+	return `<section class="check ${c.status}">${icon(c.status)}<h4>${esc(checkTitle(lang, c.title))}${meter}</h4>
+<div class="body"><p><span class="sr">${statusWord[c.status]}: </span>${esc(c.summary)}</p>${c.fix ? `<div class="fix"><strong>${t.howToFix}</strong>${esc(c.fix)}</div>` : ""}${
 		c.details?.length
-			? `<details><summary>Details</summary><ul>${c.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>`
+			? `<details><summary>${t.details}</summary><ul>${c.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>`
 			: ""
 	}</div></section>`;
 }
 
 /** A passing check or a note as one row: a clean report reads as a short list, not ten cards. */
-function ledgerRow(c: Check): string {
-	return `<li class="${c.status}">${icon(c.status)}<div class="body"><b>${esc(c.title)}</b><p><span class="sr">${statusWord[c.status]}: </span>${esc(c.summary)}</p>${
+function ledgerRow(c: Check, lang: Lang): string {
+	const t = COPY[lang];
+	const statusWord = t.status;
+	return `<li class="${c.status}">${icon(c.status)}<div class="body"><b>${esc(checkTitle(lang, c.title))}</b><p><span class="sr">${statusWord[c.status]}: </span>${esc(c.summary)}</p>${
 		c.details?.length
-			? `<details><summary>Details</summary><ul>${c.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>`
+			? `<details><summary>${t.details}</summary><ul>${c.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>`
 			: ""
 	}</div>${c.max > 0 ? `<span class="pts">${Math.round(c.points)}/${c.max}</span>` : ""}</li>`;
 }
 
 /** The score split by check, each bar as wide as its weight and filled by the points it earned. */
-function split(checks: Check[]): string {
+function split(checks: Check[], lang: Lang): string {
+	const t = COPY[lang];
 	const scored = [...checks]
 		.filter((c) => c.max > 0)
 		.sort((a, b) => order(a) - order(b) || b.max - a.max);
 	const counts = (["pass", "warn", "fail"] as const)
 		.map((s) => [s, scored.filter((c) => c.status === s).length] as const)
 		.filter(([, n]) => n > 0);
-	const label: Record<string, string> = {
-		pass: "passing",
-		warn: "to improve",
-		fail: "to fix",
-	};
-	return `<div class="split"><h3>Points by check<em>${scored.length} checks, by weight</em></h3><ol aria-hidden="true">${scored
+	const label: Record<string, string> = t.splitLabel;
+	return `<div class="split"><h3>${t.pointsByCheck}<em>${t.checksByWeight(scored.length)}</em></h3><ol aria-hidden="true">${scored
 		.map(
 			(c) =>
-				`<li class="${c.status}" style="--m:${c.max};--p:${Math.round((100 * c.points) / c.max)}" title="${esc(c.title)}: ${Math.round(c.points)} / ${c.max}"><i></i></li>`,
+				`<li class="${c.status}" style="--m:${c.max};--p:${Math.round((100 * c.points) / c.max)}" title="${esc(checkTitle(lang, c.title))}: ${Math.round(c.points)} / ${c.max}"><i></i></li>`,
 		)
 		.join(
 			"",
@@ -340,15 +322,15 @@ function split(checks: Check[]): string {
 }
 
 /** The text that hands a report's fixes to the visitor's own AI. */
-export function fixPrompt(report: Report): string {
+export function fixPrompt(report: Report, lang: Lang = "en"): string {
+	const t = COPY[lang];
 	const todo = report.checks.filter(
 		(c) => c.fix && (c.status === "fail" || c.status === "warn"),
 	);
 	return [
-		`Citable checked ${report.finalUrl} for AI search (score ${report.score}/100). Help me fix these, most important first, with the exact code or config to change:`,
+		t.fixPrompt(report.finalUrl, report.score),
 		...todo.map(
-			(c, i) =>
-				`${i + 1}. ${c.title}: ${c.summary}\n   Suggested fix: ${c.fix}`,
+			(c, i) => `${i + 1}. ${c.title}: ${c.summary}\n   ${t.fixLine}: ${c.fix}`,
 		),
 	].join("\n");
 }
@@ -369,12 +351,13 @@ const SHARE_BRAND: Record<string, [string, string]> = {
 export function shareLinks(
 	report: Pick<Report, "host" | "score">,
 	url: string,
+	lang: Lang = "en",
 ): { name: string; href: string }[] {
-	const text = `${report.host} scores ${report.score}/100 for AI search. Can ChatGPT, Claude and Perplexity cite it?`;
+	const text = COPY[lang].shareMessage(report.host, report.score);
 	const t = encodeURIComponent(text);
 	const u = encodeURIComponent(url);
 	const title = encodeURIComponent(
-		`${report.host}: ${report.score}/100 for AI search`,
+		COPY[lang].shareSubject(report.host, report.score),
 	);
 	return [
 		{ name: "X", href: `https://x.com/intent/post?text=${t}&url=${u}` },
@@ -412,22 +395,26 @@ export function shareLinks(
 const scoreClass = (score: number) =>
 	score >= 75 ? "pass" : score >= 50 ? "warn" : "fail";
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-
-export function reportPage(report: Report, publicUrl: string): string {
+export function reportPage(
+	report: Report,
+	publicUrl: string,
+	lang: Lang = "en",
+): string {
+	const t = COPY[lang];
 	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
 	const path = `${report.host}${new URL(report.url).pathname.replace(/^\/$/, "")}`;
 	if (report.error) {
 		return layout(
 			publicUrl,
+			lang,
 			{
 				path,
-				title: `${report.host}: could not check`,
-				description: `Citable could not read ${report.host}, so it cannot say whether ChatGPT, Claude, Perplexity and Google AI can cite it.`,
+				title: t.couldNotCheck(report.host),
+				description: t.couldNotCheckDescription(report.host),
 				noindex: true,
 			},
-			`<div class="wrap narrow"><div class="summary" style="grid-template-columns:1fr"><div><p class="host">${esc(report.host)}</p><div class="error">Could not read the page: ${esc(report.error)}.</div></div></div></div>`,
+			`<div class="wrap narrow"><div class="summary" style="grid-template-columns:1fr"><div><p class="host">${esc(report.host)}</p><div class="error">${esc(t.couldNotRead(report.error))}</div></div></div></div>`,
 			report.host,
 		);
 	}
@@ -438,7 +425,7 @@ export function reportPage(report: Report, publicUrl: string): string {
 	const worth = Math.round(toFix.reduce((n, c) => n + c.max - c.points, 0));
 	const passing = report.checks.filter((c) => c.status === "pass");
 	const notes = report.checks.filter((c) => c.status === "info");
-	const prompt = fixPrompt(report);
+	const prompt = fixPrompt(report, lang);
 	const q = encodeURIComponent(prompt);
 	const answers = report.crawlers.filter((c) => c.role === "answers");
 	const training = report.crawlers.filter((c) => c.role === "training");
@@ -448,7 +435,7 @@ export function reportPage(report: Report, publicUrl: string): string {
 		list.length
 			? `<div class="group"><h3>${title} · ${list.length}</h3>${[...list]
 					.sort((a, b) => order(a) - order(b) || b.max - a.max)
-					.map(checkCard)
+					.map((c) => checkCard(c, lang))
 					.join("")}</div>`
 			: "";
 	const ledger = (title: string, list: Check[]) =>
@@ -457,49 +444,56 @@ export function reportPage(report: Report, publicUrl: string): string {
 					...list,
 				]
 					.sort((a, b) => b.max - a.max)
-					.map(ledgerRow)
+					.map((c) => ledgerRow(c, lang))
 					.join("")}</ul></div>`
 			: "";
 	return layout(
 		publicUrl,
+		lang,
 		{
 			path,
-			title: `${report.host}: ${report.score}/100 for AI search`,
-			description: `Can ChatGPT, Claude, Perplexity and Google AI cite ${report.host}? Score ${report.score}/100, grade ${report.grade}, ${plural(fixes, "thing")} to fix, each with the fix.`,
+			title: t.reportTitle(report.host, report.score),
+			description: t.reportDescription(
+				report.host,
+				report.score,
+				report.grade,
+				fixes,
+			),
 			crumbs: [{ name: report.host, path }],
 			// A report shows what any site chose to say, under this domain. Only the curated examples are for search engines.
 			noindex: !EXAMPLES.includes(path),
 		},
 		`<div class="wrap narrow">
-<div class="summary stage"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="Score ${report.score} of 100"><b>${report.score}<small>grade ${report.grade}</small></b></div>
+<div class="summary stage"><div class="ring ${scoreClass(report.score)}" style="--s:${report.score}" role="img" aria-label="${esc(t.scoreAria(report.score))}"><b>${report.score}<small>${lang === "ko" ? `${report.grade}${t.grade}` : `${t.grade} ${report.grade}`}</small></b></div>
 <div><p class="host">${esc(report.host)}</p><p class="final">${esc(report.finalUrl)}</p>
-<div class="tags">${fixes === 0 ? `<span class="tag pass">✓ Nothing to fix</span>` : `<span class="tag ${toFix.some((c) => c.status === "fail") ? "fail" : "warn"}">${plural(fixes, "thing")} to fix${worth > 0 ? `, worth up to ${worth} points` : ""}</span>`}<span>Checked ${esc(report.checkedAt.replace("T", " ").slice(0, 16))} UTC</span><a class="again" href="?fresh=1">Check again</a></div></div>
+<div class="tags">${fixes === 0 ? `<span class="tag pass">${t.nothingToFix}</span>` : `<span class="tag ${toFix.some((c) => c.status === "fail") ? "fail" : "warn"}">${t.toFix(fixes, worth)}</span>`}<span>${esc(t.checkedAt(report.checkedAt.replace("T", " ").slice(0, 16)))}</span><a class="again" href="?fresh=1">${t.checkAgain}</a></div></div>
 ${
 	answers.length
-		? `<div class="crawlers"><h3>Answer engines<em>${answers.length - answersBlocked} of ${answers.length} allowed</em></h3><ul class="bots">${answers.map((c) => `<li class="${c.allowed ? "pass" : "fail"}">${icon(c.allowed ? "pass" : "fail")}<span>${esc(c.token)}<small>${esc(c.owner)}</small></span><span class="sr">${c.allowed ? "allowed" : "blocked"}</span></li>`).join("")}</ul>${training.length ? `<p class="training">Training crawlers: ${training.length - trainingBlocked} allowed, ${trainingBlocked} blocked. Not scored: it does not change whether answers cite you.</p>` : ""}</div>`
+		? `<div class="crawlers"><h3>${t.answerEngines}<em>${t.allowedOf(answers.length - answersBlocked, answers.length)}</em></h3><ul class="bots">${answers.map((c) => `<li class="${c.allowed ? "pass" : "fail"}">${icon(c.allowed ? "pass" : "fail")}<span>${esc(c.token)}<small>${esc(c.owner)}</small></span><span class="sr">${c.allowed ? t.allowed : t.blocked}</span></li>`).join("")}</ul>${training.length ? `<p class="training">${t.training(training.length - trainingBlocked, trainingBlocked)}</p>` : ""}</div>`
 		: ""
-}${report.partial ? "" : split(report.checks)}</div>
-${report.partial ? `<div class="error">Partial report: the page answered ${report.partial}, so its contents were not checked.</div>` : ""}
-${group("Fix first", toFix)}
+}${report.partial ? "" : split(report.checks, lang)}</div>
+${report.partial ? `<div class="error">${esc(t.partial(String(report.partial)))}</div>` : ""}
+${group(t.fixFirst, toFix)}
 ${
 	fixes > 0
-		? `<div class="cta"><h3>Fix it with your AI</h3><p>Citable never calls a model. Hand the list to yours, with the exact fixes.</p>
-<div class="row"><a class="btn" href="https://chatgpt.com/?q=${q}" rel="noopener" target="_blank">Ask ChatGPT</a><a class="btn" href="https://claude.ai/new?q=${q}" rel="noopener" target="_blank">Ask Claude</a></div>
-<details><summary>The text it hands over</summary><pre>${esc(prompt)}</pre></details></div>`
+		? `<div class="cta"><h3>${t.ctaTitle}</h3><p>${t.ctaText}</p>
+<div class="row"><a class="btn" href="https://chatgpt.com/?q=${q}" rel="noopener" target="_blank">${t.askChatGpt}</a><a class="btn" href="https://claude.ai/new?q=${q}" rel="noopener" target="_blank">${t.askClaude}</a></div>
+<details><summary>${t.handedText}</summary><pre>${esc(prompt)}</pre></details></div>`
 		: ""
 }
-${ledger("Passing", passing)}
-${ledger("Notes", notes)}
-<div class="share"><h3>Share this score</h3><p>Opens the network in a new tab with the link. Citable receives nothing.</p><ul>${shareLinks(
+${ledger(t.passing, passing)}
+${ledger(t.notes, notes)}
+<div class="share"><h3>${t.shareTitle}</h3><p>${t.shareText}</p><ul>${shareLinks(
 			report,
 			`${base}/${path}`,
+			lang,
 		)
 			.map(
 				(l) =>
 					`<li><a href="${esc(l.href)}" rel="noopener" target="_blank"><i style="background:${SHARE_BRAND[l.name][1]}" aria-hidden="true">${SHARE_BRAND[l.name][0]}</i>${esc(l.name)}</a></li>`,
 			)
 			.join("")}</ul></div>
-<div class="badge"><h3>Show the score</h3><p>Click the code to select it</p><img src="${root}/badge/${esc(report.host)}.svg" alt="AI search score ${report.score}" height="20">
+<div class="badge"><h3>${t.badgeTitle}</h3><p>${t.badgeHint}</p><img src="${root}/badge/${esc(report.host)}.svg" alt="${esc(t.badgeAlt(report.score))}" height="20">
 <pre>[![AI search: ${report.score}/100](${esc(base)}/badge/${esc(report.host)}.svg)](${esc(base)}/${esc(report.host)})</pre></div></div>`,
 		report.host,
 	);
@@ -507,23 +501,23 @@ ${ledger("Notes", notes)}
 
 const order = (c: Check) => ({ fail: 0, warn: 1, pass: 2, info: 3 })[c.status];
 
-export function aboutPage(publicUrl: string): string {
+export function aboutPage(publicUrl: string, lang: Lang = "en"): string {
+	const c = COPY[lang];
+	const body = c.aboutBody(esc(publicUrl.replace(/\/$/, "")));
 	return layout(
 		publicUrl,
+		lang,
 		{
 			path: "about",
-			title: "About the checker",
-			description:
-				"How Citable checks a site for AI search: what it fetches, the crawler it sends, what it stores, and answers to common questions.",
-			jsonLd: [faqJsonLd()],
-			crumbs: [{ name: "About", path: "about" }],
+			title: c.aboutTitle,
+			description: c.aboutDescription,
+			jsonLd: [faqJsonLd(lang)],
+			crumbs: [{ name: c.aboutCrumb, path: "about" }],
 		},
-		`<div class="wrap narrow prose"><p class="kicker">About</p><h1>How the checker works</h1>
-<p>For each check, Citable fetches at most four addresses from the site: the page, <code>/robots.txt</code>, <code>/llms.txt</code> and the sitemap. It identifies itself as <code>CitableBot/1.0 (+${esc(publicUrl.replace(/\/$/, ""))}/about)</code>, sends only GET requests, follows at most five redirects, reads at most 2 MB, and only reaches public addresses on ports 80 and 443.</p>
-<p>A report is kept in memory for an hour so a shared link does not fetch the site again, then forgotten. Nothing is stored on disk; there is no database and no account.</p>
-<p>Robots rules are read as RFC 9309 says: the group that names a crawler, else the <code>*</code> group, and the longest matching rule. Citable does not pretend to be another crawler, so a firewall that blocks some user agents may treat the real ones differently.</p>
-<h2>Questions</h2>
-<dl>${SITE.faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join("")}</dl></div>`,
+		`<div class="wrap narrow prose"><p class="kicker">${c.aboutKicker}</p><h1>${c.aboutH1}</h1>
+${body.map((p) => `<p>${p}</p>`).join("\n")}
+<h2>${c.aboutQuestions}</h2>
+<dl>${c.faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join("")}</dl></div>`,
 	);
 }
 

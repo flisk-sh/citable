@@ -11,6 +11,7 @@ import {
 	securityHeaders,
 	TtlCache,
 } from "./guard";
+import { LANGS, type Lang, pickLang } from "./i18n";
 import { handleMcp } from "./mcp";
 import { type Fetcher, normalizeTarget, safeFetch } from "./net";
 import { rangeResponse } from "./range";
@@ -158,18 +159,54 @@ export function createApp(options: AppOptions = {}) {
 			if (!c.res.headers.has(k)) c.res.headers.set(k, v);
 	});
 
+	/** This request's language; an explicit ?lang= is remembered in a cookie so the next page keeps it. */
+	const langOf = (c: {
+		req: {
+			query: (k: string) => string | undefined;
+			header: (n: string) => string | undefined;
+		};
+	}): Lang =>
+		pickLang({
+			query: c.req.query("lang"),
+			cookie: c.req.header("cookie"),
+			acceptLanguage: c.req.header("accept-language"),
+		});
+	/** Headers for a page that depends on the language: never cached across languages. */
+	const pageHeaders = (
+		c: { req: { query: (k: string) => string | undefined } },
+		lang: Lang,
+		extra: Record<string, string> = {},
+	): Record<string, string> => {
+		const picked = c.req.query("lang");
+		return {
+			vary: "Accept-Language, Cookie",
+			...(picked && (LANGS as readonly string[]).includes(picked)
+				? {
+						"set-cookie": `lang=${lang}; Path=/; Max-Age=31536000; SameSite=Lax`,
+					}
+				: {}),
+			...extra,
+		};
+	};
+
 	app.get("/health", (c) => c.json({ status: "ok", service: "citable" }));
 	app.get("/ready", (c) => c.json({ ready: true }));
-	app.get("/", (c) =>
-		c.html(homePage(siteOf(c)), 200, {
-			"cache-control": "public, max-age=300",
-		}),
-	);
-	app.get("/about", (c) =>
-		c.html(aboutPage(siteOf(c)), 200, {
-			"cache-control": "public, max-age=300",
-		}),
-	);
+	app.get("/", (c) => {
+		const lang = langOf(c);
+		return c.html(
+			homePage(siteOf(c), false, lang),
+			200,
+			pageHeaders(c, lang, { "cache-control": "public, max-age=300" }),
+		);
+	});
+	app.get("/about", (c) => {
+		const lang = langOf(c);
+		return c.html(
+			aboutPage(siteOf(c), lang),
+			200,
+			pageHeaders(c, lang, { "cache-control": "public, max-age=300" }),
+		);
+	});
 	app.get("/robots.txt", (c) =>
 		c.text(robotsTxt(siteOf(c).replace(/\/$/, ""))),
 	);
@@ -301,12 +338,16 @@ export function createApp(options: AppOptions = {}) {
 		const params = new URLSearchParams(url.search);
 		const fresh = params.get("fresh") === "1";
 		params.delete("fresh");
+		const lang = langOf(c);
+		const langHeaders = pageHeaders(c, lang);
+		// ?lang= picks the page's language; it is no part of the address being checked.
+		params.delete("lang");
 		const query = params.toString();
 		let decoded: string;
 		try {
 			decoded = decodeURIComponent(rest);
 		} catch {
-			return c.html(homePage(siteOf(c), true), 404);
+			return c.html(homePage(siteOf(c), true, lang), 404, langHeaders);
 		}
 		const fileExtension = decoded.match(/\.([^.]+)$/)?.[1].toLowerCase();
 		if (
@@ -316,7 +357,8 @@ export function createApp(options: AppOptions = {}) {
 		)
 			return c.notFound();
 		const target = normalizeTarget(decoded + (query ? `?${query}` : ""));
-		if (!target) return c.html(homePage(siteOf(c), true), 404);
+		if (!target)
+			return c.html(homePage(siteOf(c), true, lang), 404, langHeaders);
 		// One address per page: https://example.com/ and example.com both land on /example.com.
 		const canonicalPath = `/${target.hostname}${target.pathname === "/" ? "" : target.pathname}`;
 		if (canonicalPath !== url.pathname)
@@ -332,7 +374,7 @@ export function createApp(options: AppOptions = {}) {
 			);
 		if (!("checks" in result))
 			return c.text(result.error, result.status as 429 | 503);
-		return c.html(reportPage(result, siteOf(c)), 200);
+		return c.html(reportPage(result, siteOf(c), lang), 200, langHeaders);
 	});
 
 	return app;
