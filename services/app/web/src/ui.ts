@@ -256,7 +256,7 @@ export function homePage(publicUrl: string, noindex = false): string {
 		`<section class="hero stage"><div class="wrap">
 <span class="pill"><i></i>Open source · with an MCP server</span>
 <h1>Can AI answers <em class="grad">cite</em> your site?</h1>
-<p class="lede">Put <b>${esc(new URL(publicUrl).host)}/</b> in front of any address. Citable reads the page the way ChatGPT, Claude, Perplexity and Google's crawlers do, and tells you what keeps it out of their answers, with the fix.</p>
+<p class="lede">Put <b>${esc(new URL(publicUrl).host)}/</b> in front of any address. Citable reads your page like AI crawlers do and tells you what keeps it out of their answers, with the fix.</p>
 ${form(publicUrl)}
 <p class="note"><b>●</b> Free score in seconds · No signup · Nothing stored</p>
 <p class="examples">Try ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
