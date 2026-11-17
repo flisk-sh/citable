@@ -1,7 +1,7 @@
 // The pages, rendered on the server with no JavaScript: the home page with its form, a report, and the badge. The
 // Content-Security-Policy in index.ts allows no scripts at all.
 import { type Check, CRAWLERS, type Report } from "./checks";
-import { COPY, checkTitle, type Lang } from "./i18n";
+import { COPY, checkTitle, type Lang, pfx } from "./i18n";
 import { esc, faqJsonLd, head, ICONS, type PageMeta } from "./seo";
 import { SITE } from "./site";
 
@@ -157,7 +157,7 @@ const rootOf = (publicUrl: string) =>
 
 /** The address bar the visitor types into: Citable's host in front, as the address it will open. */
 const form = (publicUrl: string, lang: Lang, value = "") =>
-	`<form class="addr" action="${rootOf(publicUrl)}/check" method="get" role="search"><span class="pre" aria-hidden="true">${esc(new URL(publicUrl).host)}/</span><input type="text" name="url" value="${esc(value)}" placeholder="example.com" aria-label="${esc(COPY[lang].addressLabel)}" autocomplete="url" inputmode="url" spellcheck="false" required><button type="submit">${COPY[lang].check}</button></form>`;
+	`<form class="addr" action="${rootOf(publicUrl)}${pfx(lang)}/check" method="get" role="search"><span class="pre" aria-hidden="true">${esc(new URL(publicUrl).host)}/</span><input type="text" name="url" value="${esc(value)}" placeholder="example.com" aria-label="${esc(COPY[lang].addressLabel)}" autocomplete="url" inputmode="url" spellcheck="false" required><button type="submit">${COPY[lang].check}</button></form>`;
 
 /** `publicUrl` is the site's own address, ending in a slash; `meta.path` is the page under it. */
 function layout(
@@ -170,12 +170,17 @@ function layout(
 	const base = publicUrl.replace(/\/$/, "");
 	const root = rootOf(publicUrl);
 	const c = COPY[lang];
+	const home = root + pfx(lang);
+	const other =
+		lang === "ko"
+			? `${root}/${meta.path}?lang=en`
+			: `${root}/ko${meta.path ? `/${meta.path}` : ""}`;
 	return `<!doctype html><html lang="${c.htmlLang}"><head>
 ${head(base, meta, lang)}
 <style>${STYLE}</style><script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" defer></script></head><body>
-<header class="bar stage"><div class="wrap"><a class="brand" href="${root}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, lang, search)}<nav><a href="${root}/#how">${c.navHow}</a><a href="${root}/about">${c.navAbout}</a><a href="${SITE.repo}">GitHub</a><a href="?lang=${c.switchTo}" hreflang="${c.switchTo}" lang="${c.switchTo}" rel="nofollow">${c.switchLabel}</a></nav></div></header>
+<header class="bar stage"><div class="wrap"><a class="brand" href="${home}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, lang, search)}<nav><a href="${home}/#how">${c.navHow}</a><a href="${home}/about">${c.navAbout}</a><a href="${SITE.repo}">GitHub</a><a href="${other}" hreflang="${c.switchTo}" lang="${c.switchTo}" rel="nofollow">${c.switchLabel}</a></nav></div></header>
 <main>${body}</main>
-<footer><div class="wrap"><span>${SITE.name} ${c.footerNote}</span><span><a href="${SITE.repo}">${c.footerOpen}</a> · ${c.footerBuilt} <a href="${SITE.author.url}">Flisk</a> · <a href="${root}/about">${c.footerAbout}</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
+<footer><div class="wrap"><span>${SITE.name} ${c.footerNote}</span><span><a href="${SITE.repo}">${c.footerOpen}</a> · ${c.footerBuilt} <a href="${SITE.author.url}">Flisk</a> · <a href="${home}/about">${c.footerAbout}</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
 </body></html>`;
 }
 
@@ -244,7 +249,7 @@ export function homePage(
 <p class="lede">${c.lede(host)}</p>
 ${form(publicUrl, lang)}
 <p class="note">${c.note}</p>
-<p class="examples">${c.tryLabel} ${EXAMPLES.map((e) => `<a href="${root}/${e}">${e}</a>`).join("")}</p>
+<p class="examples">${c.tryLabel} ${EXAMPLES.map((e) => `<a href="${root}${pfx(lang)}/${e}">${e}</a>`).join("")}</p>
 <p class="engines"><span>${c.enginesLabel}</span>${ENGINES.map(([n, col]) => `<b style="--d:${col}"><i></i>${n}</b>`).join("")}</p>
 ${sample(new URL(publicUrl).host, lang)}
 <div class="stats">${stats(lang)
