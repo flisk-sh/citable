@@ -20,7 +20,10 @@ const rpc = (app: ReturnType<typeof make>, body: unknown) =>
 describe("pages", () => {
 	it("keeps the home page lead short", async () => {
 		const html = await (await make().request("/")).text();
-		const lead = /<p class="lede">([\s\S]*?)<\/p>/.exec(html)?.[1].replace(/<[^>]+>/g, "") ?? "";
+		const lead =
+			/<p class="lede">([\s\S]*?)<\/p>/
+				.exec(html)?.[1]
+				.replace(/<[^>]+>/g, "") ?? "";
 		expect(lead.split(/\s+/).length).toBeLessThanOrEqual(32);
 	});
 	it("serves the home page with a policy that allows only the Flisk bar script", async () => {
