@@ -1,6 +1,6 @@
 // Search, link previews and AI answers: the <head> of every page, JSON-LD, robots.txt, sitemap.xml, llms.txt,
 // site.webmanifest and security.txt. All of it comes from SITE (site.ts) and the address the site is served at.
-import { COPY, type Lang } from "./i18n";
+import { COPY, type Lang, pfx } from "./i18n";
 import { SITE } from "./site";
 
 export const esc = (s: string) =>
@@ -40,7 +40,11 @@ export interface PageMeta {
 /** `base` is the site address without the trailing slash: https://example.com, or …/api/web behind Flisk's proxy. */
 export function head(base: string, page: PageMeta, lang: Lang = "en"): string {
 	const c = COPY[lang];
-	const url = `${base}/${page.path}`;
+	const at = (l: Lang) =>
+		l === "en"
+			? `${base}/${page.path}`
+			: `${base}/ko${page.path ? `/${page.path}` : ""}`;
+	const url = at(lang);
 	const title = page.path ? `${page.title} · ${SITE.name}` : page.title;
 	const root = new URL(`${base}/`).pathname.replace(/\/$/, "");
 	const tags = [
@@ -49,6 +53,9 @@ export function head(base: string, page: PageMeta, lang: Lang = "en"): string {
 		`<title>${esc(title)}</title>`,
 		`<meta name="description" content="${esc(page.description)}">`,
 		`<link rel="canonical" href="${esc(url)}">`,
+		`<link rel="alternate" hreflang="en" href="${esc(at("en"))}">`,
+		`<link rel="alternate" hreflang="ko" href="${esc(at("ko"))}">`,
+		`<link rel="alternate" hreflang="x-default" href="${esc(at("en"))}">`,
 		page.noindex
 			? '<meta name="robots" content="noindex">'
 			: '<meta name="robots" content="index,follow,max-image-preview:large">',
@@ -125,7 +132,7 @@ export function jsonLd(
 					"@type": "ListItem",
 					position: i + 1,
 					name: c.name,
-					item: `${base}/${c.path}`,
+					item: `${base}${pfx(lang)}${c.path ? `/${c.path}` : ""}`,
 				}),
 			),
 		});
