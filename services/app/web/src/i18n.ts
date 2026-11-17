@@ -65,6 +65,7 @@ export interface Copy {
 	footerOpen: string;
 	footerBuilt: string;
 	footerAbout: string;
+	footerGrow: string;
 	// home
 	pill: string;
 	h1Before: string;
@@ -173,6 +174,7 @@ const en: Copy = {
 	footerOpen: "Open source",
 	footerBuilt: "built and run with",
 	footerAbout: "About the checker",
+	footerGrow: "Next step: get your first customers on",
 	pill: "Open source · with an MCP server",
 	h1Before: "Can AI answers ",
 	h1Em: "cite",
@@ -372,6 +374,7 @@ const ko: Copy = {
 	footerOpen: "오픈 소스",
 	footerBuilt: "제작 및 운영:",
 	footerAbout: "검사기 소개",
+	footerGrow: "다음 단계: 첫 고객 만나기",
 	pill: "오픈 소스 · MCP 서버 제공",
 	h1Before: "AI 답변이 내 사이트를 ",
 	h1Em: "인용",
