@@ -552,3 +552,6 @@ const KO_CHECK_TITLES: Record<string, string> = {
 
 export const checkTitle = (lang: Lang, title: string): string =>
 	lang === "ko" ? (KO_CHECK_TITLES[title] ?? title) : title;
+
+/** The path prefix a language's pages live under: Korean is under /ko, English at the root. */
+export const pfx = (lang: Lang): string => (lang === "ko" ? "/ko" : "");
