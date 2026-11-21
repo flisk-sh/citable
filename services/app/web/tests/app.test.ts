@@ -33,11 +33,11 @@ describe("pages", () => {
 		expect(csp).toContain("default-src 'none'");
 		expect(csp).toContain("script-src https://flisk.si https://flisk.sh;");
 		expect(csp).toContain(
-			"connect-src https://flisk.sh https://analytics.flisk.si;",
+			"connect-src https://flisk.si https://flisk.sh https://analytics.flisk.si;",
 		);
 		const html = await res.clone().text();
 		expect(html).toContain(
-			'<script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" defer></script>',
+			'<script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" data-product="Citable" data-icon="citable" data-accent="#2d4cc8" data-text="Check whether AI assistants can read and cite any website." defer></script>',
 		);
 		expect(res.headers.get("strict-transport-security")).toContain("max-age=");
 		expect(await res.text()).toContain("Can AI answers cite your site?");
