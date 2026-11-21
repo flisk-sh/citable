@@ -124,3 +124,55 @@ describe("files for crawlers", () => {
 		);
 	});
 });
+
+describe("MCP Server Card", () => {
+	const paths = [
+		"/.well-known/mcp-server-card.json",
+		"/.well-known/mcp/server-card.json",
+	];
+	const app = createApp({ publicUrl: "https://citable.test/" });
+	it("serves the card at both paths with identical bodies", async () => {
+		const bodies: string[] = [];
+		for (const path of paths) {
+			const res = await app.request(path);
+			expect(res.status).toBe(200);
+			expect(res.headers.get("content-type")).toBe(
+				"application/json; charset=utf-8",
+			);
+			expect(res.headers.get("access-control-allow-origin")).toBe("*");
+			expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
+			bodies.push(await res.text());
+		}
+		expect(bodies[0]).toBe(bodies[1]);
+		const card = JSON.parse(bodies[0]);
+		expect(card.$schema).toBe(
+			"https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
+		);
+		expect(card.name).toBe("si.flisk/citable");
+		expect(card.remotes[0]).toEqual({
+			type: "streamable-http",
+			url: "https://citable.flisk.si/mcp",
+		});
+	});
+	it("answers HEAD and matches what initialize says", async () => {
+		for (const path of paths) {
+			const res = await app.request(path, { method: "HEAD" });
+			expect(res.status).toBe(200);
+			expect(await res.text()).toBe("");
+		}
+		const init = await app.request("/mcp", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				jsonrpc: "2.0",
+				id: 1,
+				method: "initialize",
+				params: { protocolVersion: "2025-03-26" },
+			}),
+		});
+		const info = (await init.json()).result.serverInfo;
+		const card = await (await app.request(paths[0])).json();
+		expect(card.title).toBe(info.title);
+		expect(card.version).toBe(info.version);
+	});
+});
