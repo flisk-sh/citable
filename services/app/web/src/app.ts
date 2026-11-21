@@ -16,6 +16,7 @@ import { handleMcp } from "./mcp";
 import { type Fetcher, normalizeTarget, safeFetch } from "./net";
 import { rangeResponse } from "./range";
 import { ICONS, robotsTxt, securityTxt, sitemapXml, webManifest } from "./seo";
+import { SERVER_CARD_PATHS, serverCardJson } from "./server-card";
 import { aboutPage, badge, EXAMPLES, homePage, reportPage } from "./ui";
 
 export interface AppOptions {
@@ -261,6 +262,15 @@ export function createApp(options: AppOptions = {}) {
 	app.get("/.well-known/security.txt", (c) =>
 		c.text(securityTxt(siteOf(c).replace(/\/$/, ""))),
 	);
+	// MCP Server Card: the same JSON at both paths in use. GET also answers HEAD.
+	for (const path of SERVER_CARD_PATHS)
+		app.get(path, (c) =>
+			c.body(serverCardJson(), 200, {
+				"content-type": "application/json; charset=utf-8",
+				"access-control-allow-origin": "*",
+				"cache-control": "public, max-age=3600",
+			}),
+		);
 	// The how-it-works clip. Safari plays a video only from a server that answers byte ranges.
 	for (const [name, file] of Object.entries(video)) {
 		const body = new Uint8Array(Buffer.from(file.base64, "base64"));
