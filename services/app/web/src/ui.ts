@@ -177,7 +177,7 @@ function layout(
 			: `${root}/ko${meta.path ? `/${meta.path}` : ""}`;
 	return `<!doctype html><html lang="${c.htmlLang}"><head>
 ${head(base, meta, lang)}
-<style>${STYLE}</style><script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" defer></script></head><body>
+<style>${STYLE}</style><script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" data-product="Citable" data-icon="citable" data-accent="#2d4cc8" data-text="Check whether AI assistants can read and cite any website." defer></script></head><body>
 <header class="bar stage"><div class="wrap"><a class="brand" href="${home}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, lang, search)}<nav><a href="${home}/#how">${c.navHow}</a><a href="${home}/about">${c.navAbout}</a><a href="${SITE.repo}">GitHub</a><a href="${other}" hreflang="${c.switchTo}" lang="${c.switchTo}" rel="nofollow">${c.switchLabel}</a></nav></div></header>
 <main>${body}</main>
 <footer><div class="wrap"><span>${SITE.name} ${c.footerNote}</span><span><a href="${SITE.repo}">${c.footerOpen}</a> · ${c.footerBuilt} <a href="${SITE.author.url}">Flisk</a> · <a href="${home}/about">${c.footerAbout}</a></span><span>${c.footerGrow} <a href="https://grow.flisk.si/">grow.flisk.si</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
