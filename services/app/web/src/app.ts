@@ -160,6 +160,17 @@ export function createApp(options: AppOptions = {}) {
 			if (!c.res.headers.has(k)) c.res.headers.set(k, v);
 	});
 
+	// Hono matches exact paths, so /about/ would fall through to 404 although /about exists.
+	// Redirect once to the canonical no-slash path, keeping the language prefix and query string.
+	app.use("*", async (c, next) => {
+		const url = new URL(c.req.url);
+		if (url.pathname.length <= 1 || !url.pathname.endsWith("/")) return next();
+		const base = siteOf(c).replace(/\/$/, "");
+		const prefix = langOf(c) === "ko" ? "/ko" : "";
+		const path = url.pathname.replace(/\/+$/, "");
+		return c.redirect(`${base}${prefix}${path}${url.search}`, 301);
+	});
+
 	/** The language of this page: Korean lives under /ko (the outer app strips the prefix and sets this header). */
 	const langOf = (c: {
 		req: { header: (n: string) => string | undefined };

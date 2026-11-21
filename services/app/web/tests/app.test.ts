@@ -18,6 +18,31 @@ const rpc = (app: ReturnType<typeof make>, body: unknown) =>
 	});
 
 describe("pages", () => {
+	it("redirects a trailing slash to the canonical no-slash path", async () => {
+		const res = await make().request("/about/");
+		expect(res.status).toBe(301);
+		expect(res.headers.get("location")).toBe("https://citable.test/about");
+	});
+
+	it("keeps the query string on the trailing-slash redirect", async () => {
+		const res = await make().request("/about/?x=1");
+		expect(res.status).toBe(301);
+		expect(res.headers.get("location")).toBe("https://citable.test/about?x=1");
+	});
+
+	it("keeps the Korean prefix on the trailing-slash redirect", async () => {
+		const res = await make().request("/ko/about/", {
+			headers: { "x-citable-lang": "ko" },
+		});
+		expect(res.status).toBe(301);
+		expect(res.headers.get("location")).toBe("https://citable.test/ko/about");
+	});
+
+	it("leaves / and paths without a trailing slash alone", async () => {
+		expect((await make().request("/")).status).toBe(200);
+		expect((await make().request("/about")).status).toBe(200);
+	});
+
 	it("keeps the home page lead short", async () => {
 		const html = await (await make().request("/")).text();
 		const lead =
