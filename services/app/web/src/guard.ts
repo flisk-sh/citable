@@ -140,7 +140,7 @@ export function securityHeaders(): Record<string, string> {
 			"media-src 'self'",
 			"base-uri 'none'",
 			"form-action 'self'",
-			"frame-ancestors 'none'",
+			"frame-ancestors https://analytics.flisk.si",
 		].join("; "),
 		"strict-transport-security": "max-age=31536000; includeSubDomains",
 		"x-content-type-options": "nosniff",
