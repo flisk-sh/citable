@@ -161,6 +161,20 @@ export function createApp(options: AppOptions = {}) {
 			if (!c.res.headers.has(k)) c.res.headers.set(k, v);
 	});
 
+	// Hono matches exact paths, so /about/ would fall through to 404 although /about exists.
+	// Redirect once to the canonical no-slash path, keeping the language prefix and query string.
+	app.use("*", async (c, next) => {
+		const url = new URL(c.req.url);
+		if (c.req.method !== "GET" && c.req.method !== "HEAD") return next();
+		if (url.pathname.length <= 1 || !url.pathname.endsWith("/")) return next();
+		// Only the site's own pages: report addresses (/example.com/) are canonicalized by the catch-all route.
+		if (!RESERVED.has(url.pathname.split("/")[1])) return next();
+		const base = siteOf(c).replace(/\/$/, "");
+		const prefix = langOf(c) === "ko" ? "/ko" : "";
+		const path = url.pathname.replace(/\/+$/, "");
+		return c.redirect(`${base}${prefix}${path}${url.search}`, 301);
+	});
+
 	/** The language of this page: Korean lives under /ko (the outer app strips the prefix and sets this header). */
 	const langOf = (c: {
 		req: { header: (n: string) => string | undefined };
