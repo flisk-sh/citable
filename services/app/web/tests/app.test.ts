@@ -43,6 +43,11 @@ describe("pages", () => {
 		expect((await make().request("/about")).status).toBe(200);
 	});
 
+	it("does not redirect a POST, which a 301 would turn into a GET", async () => {
+		const res = await make().request("/about/", { method: "POST" });
+		expect(res.status).not.toBe(301);
+	});
+
 	it("keeps the home page lead short", async () => {
 		const html = await (await make().request("/")).text();
 		const lead =
