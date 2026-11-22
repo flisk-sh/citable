@@ -28,6 +28,10 @@ describe("site.ts", () => {
 		};
 		for (const name of Object.values(ICONS)) expect(ASSETS[name]).toBeDefined();
 		expect(size(ICONS.og)).toEqual([1200, 630]);
+		// A link preview is fetched once per share; keep the card smaller than the other Flisk cards.
+		expect(
+			Buffer.from(ASSETS[ICONS.og].base64, "base64").byteLength,
+		).toBeLessThan(200 * 1024);
 		expect(size(ICONS.apple)).toEqual([180, 180]);
 	});
 });

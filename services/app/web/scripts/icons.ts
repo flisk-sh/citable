@@ -3,6 +3,8 @@
 //   bun run icons
 // The files are embedded in the code because Flisk's image (and any `tsc` build) ships src/ alone. resvg draws the
 // text with the fonts installed on this machine; the output is committed, so the app never renders anything.
+// The committed og.png is a 256-colour palette export of og.svg (116 KB instead of 354 KB); re-optimise it if you
+// regenerate the assets. tests/seo.test.ts guards the size and dimensions.
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
