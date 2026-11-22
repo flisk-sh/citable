@@ -3,6 +3,13 @@
 import type { Report } from "./checks";
 import { fixPrompt } from "./ui";
 
+/** What `initialize` answers; the MCP Server Card at /.well-known repeats the title and version. */
+export const SERVER_INFO = {
+	name: "citable",
+	title: "Citable MCP",
+	version: "1.0.0",
+};
+
 const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 
 interface JsonRpcRequest {
@@ -130,7 +137,7 @@ async function handleOne(
 					? asked
 					: PROTOCOL_VERSIONS[0],
 				capabilities: { tools: {}, prompts: {} },
-				serverInfo: { name: "citable", title: "Citable MCP", version: "1.0.0" },
+				serverInfo: SERVER_INFO,
 				instructions:
 					"Use check_site when someone asks whether AI search or chatbots can find, read or cite a website.",
 			});
