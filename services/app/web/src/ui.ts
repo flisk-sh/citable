@@ -12,6 +12,7 @@ const STYLE = `
 @media (prefers-color-scheme:dark){:root{--bg:#0e0f12;--surface:#16181d;--sunk:#1c1f25;--fg:#eceae4;--muted:#a29f97;--faint:#77746d;--line:#272a31;--accent:#8ea2ff;--accent-fg:#0e0f12;--pass:#4fcf8e;--warn:#f0ad4e;--fail:#ff7b72;--info:#9fb0d4;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -16px rgba(0,0,0,.6)}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.skip-link{position:absolute;left:-9999px;top:0;z-index:100;padding:10px 14px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;font-weight:600}.skip-link:focus{left:12px;top:12px;outline:2px solid var(--accent);outline-offset:2px}
 a{color:var(--accent);text-underline-offset:3px}code{font-family:var(--mono);font-size:.9em;background:var(--sunk);padding:1px 6px;border-radius:6px}
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px}.narrow{max-width:820px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -177,9 +178,9 @@ function layout(
 			: `${root}/ko${meta.path ? `/${meta.path}` : ""}`;
 	return `<!doctype html><html lang="${c.htmlLang}"><head>
 ${head(base, meta, lang)}
-<style>${STYLE}</style><script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" data-product="Citable" data-icon="citable" data-accent="#2d4cc8" data-text="Check whether AI assistants can read and cite any website." defer></script></head><body>
+<style>${STYLE}</style><script defer data-domain="citable.flisk.si" src="https://flisk.sh/a.js"></script><script src="https://flisk.si/assets/bar.js" data-product="Citable" data-icon="citable" data-accent="#2d4cc8" data-text="Check whether AI assistants can read and cite any website." defer></script></head><body><a class="skip-link" href="#main">Skip to content</a>
 <header class="bar stage"><div class="wrap"><a class="brand" href="${home}/"><img src="${root}/${ICONS.svg}" alt="" width="28" height="28">${SITE.name}</a>${search === undefined ? "" : form(publicUrl, lang, search)}<nav><a href="${home}/#how">${c.navHow}</a><a href="${home}/about">${c.navAbout}</a><a href="${SITE.repo}">GitHub</a><a href="${other}" hreflang="${c.switchTo}" lang="${c.switchTo}" rel="nofollow">${c.switchLabel}</a></nav></div></header>
-<main>${body}</main>
+<main id="main">${body}</main>
 <footer><div class="wrap"><span>${SITE.name} ${c.footerNote}</span><span><a href="${SITE.repo}">${c.footerOpen}</a> · ${c.footerBuilt} <a href="${SITE.author.url}">Flisk</a> · <a href="${home}/about">${c.footerAbout}</a></span><span>${c.footerGrow} <a href="https://grow.flisk.si/">grow.flisk.si</a></span><span class="badge"><a href="https://devhunt.org/tool/citable" target="_blank" rel="noopener" title="Citable on DevHunt"><img src="https://devhunt.org/badge/citable.svg" alt="Citable - Featured on DevHunt" width="220" height="54" loading="lazy"></a></span></div></footer>
 </body></html>`;
 }
