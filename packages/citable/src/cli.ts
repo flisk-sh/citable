@@ -150,9 +150,12 @@ export async function main(argv: string[], io: Io): Promise<number> {
 		return 2;
 	};
 	if (!positionals.length) return usage("Give at least one address.");
-	const minScore =
-		values["min-score"] === undefined ? undefined : Number(values["min-score"]);
-	if (minScore !== undefined && !(minScore >= 0 && minScore <= 100))
+	const minScoreArg = values["min-score"]?.trim();
+	const minScore = minScoreArg === undefined ? undefined : Number(minScoreArg);
+	if (
+		minScoreArg === "" ||
+		(minScore !== undefined && !(minScore >= 0 && minScore <= 100))
+	)
 		return usage("--min-score takes a number from 0 to 100.");
 	const timeoutMs =
 		values.timeout === undefined ? 8000 : Number(values.timeout);
