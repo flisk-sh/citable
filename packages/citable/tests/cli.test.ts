@@ -54,6 +54,21 @@ describe("citable", () => {
 		);
 	});
 
+	it.each(["", "   "])(
+		"rejects a blank --min-score (%j)",
+		async (threshold) => {
+			const site = goodSite();
+			delete site["https://acme.example/llms.txt"];
+			const { code, out, err } = await run(
+				["acme.example", "--min-score", threshold],
+				site,
+			);
+			expect(code).toBe(2);
+			expect(out).toBe("");
+			expect(err).toContain("--min-score takes a number from 0 to 100.");
+		},
+	);
+
 	it("scores the checks left after --skip out of 100", async () => {
 		const site = goodSite();
 		delete site["https://acme.example/llms.txt"];

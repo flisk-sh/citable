@@ -12,7 +12,9 @@ describe("citable skip link", () => {
 	it("is the first focusable element in the body", () => {
 		for (const html of pages) {
 			expect(html).toContain(`<body>${skip}`);
-			expect(html.indexOf(skip)).toBeLessThan(html.indexOf('<header class="bar stage">'));
+			expect(html.indexOf(skip)).toBeLessThan(
+				html.indexOf('<header class="bar stage">'),
+			);
 		}
 	});
 
