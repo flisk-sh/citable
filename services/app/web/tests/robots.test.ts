@@ -29,6 +29,21 @@ describe("robots.txt", () => {
 		expect(isAllowed(robots, "PerplexityBot", "/").allowed).toBe(true);
 	});
 
+	it("keeps user-agent lines in one group across extension records", () => {
+		const robots = parseRobots(
+			"User-agent: OAI-SearchBot\nCrawl-delay: 10\nUser-agent: Claude-SearchBot\nDisallow: /private\n",
+		);
+		expect(isAllowed(robots, "OAI-SearchBot", "/private")).toEqual({
+			allowed: false,
+			named: true,
+			rule: "Disallow: /private",
+		});
+		expect(isAllowed(robots, "Claude-SearchBot", "/private").allowed).toBe(
+			false,
+		);
+		expect(isAllowed(robots, "OAI-SearchBot", "/public").allowed).toBe(true);
+	});
+
 	it("lets the longest rule win, and Allow win a tie", () => {
 		const robots = parseRobots(
 			"User-agent: *\nDisallow: /docs\nAllow: /docs/public\nDisallow: /x\nAllow: /x\n",

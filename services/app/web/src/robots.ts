@@ -40,9 +40,9 @@ export function parseRobots(text: string): Robots {
 			if (value) sitemaps.push(value);
 			continue;
 		}
-		lastWasAgent = false;
 		if (!current) continue;
 		if (key === "allow" || key === "disallow") {
+			lastWasAgent = false;
 			// An empty Disallow allows everything: it is no rule at all.
 			if (key === "disallow" && !value) continue;
 			current.rules.push({ allow: key === "allow", pattern: value });
